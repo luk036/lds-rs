@@ -6,26 +6,26 @@ fn main() {
 
     let mut vgen = Vdcorput::new_default();
     for _i in 0..10 {
-        println!("{}", vgen.next_item());
+        println!("{}", vgen.call());
     }
 
     let mut cgen = Circle::new(2);
     for _i in 0..10 {
-        println!("{:?}", cgen.next_item());
+        println!("{:?}", cgen.call());
     }
 
     let mut hgen = Halton::new(&base);
     for _i in 0..10 {
-        println!("{:?}", hgen.next_item());
+        println!("{:?}", hgen.call());
     }
 
     let mut sgen = Sphere::new(&base);
     for _i in 0..10 {
-        println!("{:?}", sgen.next_item());
+        println!("{:?}", sgen.call());
     }
 
     let mut s3fgen = Sphere3Hopf::new(&base);
     for _i in 0..10 {
-        println!("{:?}", s3fgen.next_item());
+        println!("{:?}", s3fgen.call());
     }
 }

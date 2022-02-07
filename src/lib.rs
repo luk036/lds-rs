@@ -1,6 +1,6 @@
 pub mod lds {
 
-    static TWO_PI: f64 = std::f64::consts::TAU;
+    const TWO_PI: f64 = std::f64::consts::TAU;
 
     fn vdc(mut k: u32, base: u32) -> f64 {
         let mut vdc = 0.0;
@@ -28,7 +28,7 @@ pub mod lds {
             Vdcorput { count: 0, base: 2 }
         }
 
-        pub fn next_item(&mut self) -> f64 {
+        pub fn call(&mut self) -> f64 {
             self.count += 1;
             vdc(self.count, self.base)
         }
@@ -56,8 +56,8 @@ pub mod lds {
             }
         }
 
-        pub fn next_item(&mut self) -> [f64; 2] {
-            [self.vdc0.next_item(), self.vdc1.next_item()]
+        pub fn call(&mut self) -> [f64; 2] {
+            [self.vdc0.call(), self.vdc1.call()]
         }
 
         /**
@@ -87,9 +87,9 @@ pub mod lds {
             }
         }
 
-        pub fn next_item(&mut self) -> [f64; 2] {
+        pub fn call(&mut self) -> [f64; 2] {
             // let two_pi = 2.0 * (-1.0 as f64).acos(); // ???
-            let theta = self.vdc.next_item() * TWO_PI; // map to [0, 2*pi];
+            let theta = self.vdc.call() * TWO_PI; // map to [0, 2*pi];
             [theta.sin(), theta.cos()]
         }
 
@@ -116,10 +116,10 @@ pub mod lds {
             }
         }
 
-        pub fn next_item(&mut self) -> [f64; 3] {
-            let cosphi = 2.0 * self.vdc.next_item() - 1.0; // map to [-1, 1];
+        pub fn call(&mut self) -> [f64; 3] {
+            let cosphi = 2.0 * self.vdc.call() - 1.0; // map to [-1, 1];
             let sinphi = (1.0 - cosphi * cosphi).sqrt();
-            let [c, s] = self.cirgen.next_item();
+            let [c, s] = self.cirgen.call();
             [sinphi * c, sinphi * s, cosphi]
         }
 
@@ -154,10 +154,10 @@ pub mod lds {
             }
         }
 
-        pub fn next_item(&mut self) -> [f64; 4] {
-            let phi = self.vdc0.next_item() * TWO_PI; // map to [0, 2*pi];
-            let psy = self.vdc1.next_item() * TWO_PI; // map to [0, 2*pi];
-            let vd = self.vdc2.next_item();
+        pub fn call(&mut self) -> [f64; 4] {
+            let phi = self.vdc0.call() * TWO_PI; // map to [0, 2*pi];
+            let psy = self.vdc1.call() * TWO_PI; // map to [0, 2*pi];
+            let vd = self.vdc2.call();
             let cos_eta = vd.sqrt();
             let sin_eta = (1.0 - vd).sqrt();
             [
