@@ -1,0 +1,168 @@
+    Checking lds-rs v0.1.0 (/home/lubuntu/Documents/github/lds-rs)
+warning: unused import: `crate::lds_n2::Sphere3`
+ --> src/main.rs:8:5
+  |
+8 | use crate::lds_n2::Sphere3;
+  |     ^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+error[E0015]: calls in constants are limited to constant functions, tuple structs and tuple variants
+  --> src/lds_n2.rs:10:24
+   |
+10 | const x: Array1<f64> = Array1::linspace(0.0, PI, 300);
+   |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0015]: calls in constants are limited to constant functions, tuple structs and tuple variants
+  --> src/lds_n2.rs:11:37
+   |
+11 | const t: Array1<f64> = 0.5 * (&x - &x.mapv(f64::sin) - &x.mapv(f64::cos));
+   |                                     ^^^^^^^^^^^^^^^^
+
+error[E0015]: calls in constants are limited to constant functions, tuple structs and tuple variants
+  --> src/lds_n2.rs:11:31
+   |
+11 | const t: Array1<f64> = 0.5 * (&x - &x.mapv(f64::sin) - &x.mapv(f64::cos));
+   |                               ^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0015]: calls in constants are limited to constant functions, tuple structs and tuple variants
+  --> src/lds_n2.rs:11:57
+   |
+11 | const t: Array1<f64> = 0.5 * (&x - &x.mapv(f64::sin) - &x.mapv(f64::cos));
+   |                                                         ^^^^^^^^^^^^^^^^
+
+error[E0015]: calls in constants are limited to constant functions, tuple structs and tuple variants
+  --> src/lds_n2.rs:11:30
+   |
+11 | const t: Array1<f64> = 0.5 * (&x - &x.mapv(f64::sin) - &x.mapv(f64::cos));
+   |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0015]: calls in constants are limited to constant functions, tuple structs and tuple variants
+  --> src/lds_n2.rs:11:24
+   |
+11 | const t: Array1<f64> = 0.5 * (&x - &x.mapv(f64::sin) - &x.mapv(f64::cos));
+   |                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0493]: destructors cannot be evaluated at compile-time
+  --> src/lds_n2.rs:11:57
+   |
+11 | const t: Array1<f64> = 0.5 * (&x - &x.mapv(f64::sin) - &x.mapv(f64::cos));
+   |                                                         ^^^^^^^^^^^^^^^^- value is dropped here
+   |                                                         |
+   |                                                         constants cannot evaluate destructors
+
+error[E0493]: destructors cannot be evaluated at compile-time
+  --> src/lds_n2.rs:11:57
+   |
+11 | const t: Array1<f64> = 0.5 * (&x - &x.mapv(f64::sin) - &x.mapv(f64::cos));
+   |                                                         ^               - value is dropped here
+   |                                                         |
+   |                                                         constants cannot evaluate destructors
+
+error[E0493]: destructors cannot be evaluated at compile-time
+  --> src/lds_n2.rs:11:37
+   |
+11 | const t: Array1<f64> = 0.5 * (&x - &x.mapv(f64::sin) - &x.mapv(f64::cos));
+   |                                     ^^^^^^^^^^^^^^^^                    - value is dropped here
+   |                                     |
+   |                                     constants cannot evaluate destructors
+
+error[E0493]: destructors cannot be evaluated at compile-time
+  --> src/lds_n2.rs:11:37
+   |
+11 | const t: Array1<f64> = 0.5 * (&x - &x.mapv(f64::sin) - &x.mapv(f64::cos));
+   |                                     ^                                   - value is dropped here
+   |                                     |
+   |                                     constants cannot evaluate destructors
+
+error[E0493]: destructors cannot be evaluated at compile-time
+  --> src/lds_n2.rs:11:32
+   |
+11 | const t: Array1<f64> = 0.5 * (&x - &x.mapv(f64::sin) - &x.mapv(f64::cos));
+   |                                ^ constants cannot evaluate destructors  - value is dropped here
+
+error[E0015]: calls in constants are limited to constant functions, tuple structs and tuple variants
+  --> src/lds_n2.rs:12:57
+   |
+12 | const sp3: CubicSmoothingSpline<f64, Dim<[usize; 1]>> = CubicSmoothingSpline::new(&t, &x)
+   |                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0015]: calls in constants are limited to constant functions, tuple structs and tuple variants
+  --> src/lds_n2.rs:12:57
+   |
+12 |   const sp3: CubicSmoothingSpline<f64, Dim<[usize; 1]>> = CubicSmoothingSpline::new(&t, &x)
+   |  _________________________________________________________^
+13 | |             .make()
+   | |___________________^
+
+error[E0015]: calls in constants are limited to constant functions, tuple structs and tuple variants
+  --> src/lds_n2.rs:12:57
+   |
+12 |   const sp3: CubicSmoothingSpline<f64, Dim<[usize; 1]>> = CubicSmoothingSpline::new(&t, &x)
+   |  _________________________________________________________^
+13 | |             .make()
+14 | |             .unwrap();
+   | |_____________________^
+
+error[E0493]: destructors cannot be evaluated at compile-time
+  --> src/lds_n2.rs:12:88
+   |
+12 | const sp3: CubicSmoothingSpline<f64, Dim<[usize; 1]>> = CubicSmoothingSpline::new(&t, &x)
+   |                                                                                        ^ constants cannot evaluate destructors
+13 |             .make()
+14 |             .unwrap();
+   |                     - value is dropped here
+
+error[E0493]: destructors cannot be evaluated at compile-time
+  --> src/lds_n2.rs:12:84
+   |
+12 | const sp3: CubicSmoothingSpline<f64, Dim<[usize; 1]>> = CubicSmoothingSpline::new(&t, &x)
+   |                                                                                    ^ constants cannot evaluate destructors
+13 |             .make()
+14 |             .unwrap();
+   |                     - value is dropped here
+
+error[E0716]: temporary value dropped while borrowed
+  --> src/lds_n2.rs:12:84
+   |
+12 |   const sp3: CubicSmoothingSpline<f64, Dim<[usize; 1]>> = CubicSmoothingSpline::new(&t, &x)
+   |                                                           -                          ^ creates a temporary which is freed while still in use
+   |  _________________________________________________________|
+   | |
+13 | |             .make()
+14 | |             .unwrap();
+   | |                     -
+   | |                     |
+   | |_____________________temporary value is freed at the end of this statement
+   |                       using this value as a constant requires that borrow lasts for `'static`
+
+error[E0716]: temporary value dropped while borrowed
+  --> src/lds_n2.rs:12:88
+   |
+12 |   const sp3: CubicSmoothingSpline<f64, Dim<[usize; 1]>> = CubicSmoothingSpline::new(&t, &x)
+   |                                                           -                              ^ creates a temporary which is freed while still in use
+   |  _________________________________________________________|
+   | |
+13 | |             .make()
+14 | |             .unwrap();
+   | |                     -
+   | |                     |
+   | |_____________________temporary value is freed at the end of this statement
+   |                       using this value as a constant requires that borrow lasts for `'static`
+
+error[E0597]: `tiwrap` does not live long enough
+  --> src/lds_n2.rs:54:31
+   |
+54 |         let xi = sp3.evaluate(&tiwrap).unwrap();
+   |                  -------------^^^^^^^-
+   |                  |            |
+   |                  |            borrowed value does not live long enough
+   |                  argument requires that `tiwrap` is borrowed for `'static`
+...
+62 |     }
+   |     - `tiwrap` dropped here while still borrowed
+
+Some errors have detailed explanations: E0015, E0493, E0597, E0716.
+For more information about an error, try `rustc --explain E0015`.
+warning: `lds-rs` (bin "lds-rs") generated 1 warning
+error: could not compile `lds-rs` due to 19 previous errors; 1 warning emitted

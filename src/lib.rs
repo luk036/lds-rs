@@ -2,7 +2,7 @@
 
 const TWO_PI: f64 = std::f64::consts::TAU;
 
-fn vdc(mut k: u32, base: u32) -> f64 {
+fn vdc(mut k: usize, base: usize) -> f64 {
     let mut vdc = 0.0;
     let mut denom = 1.0;
     while k != 0 {
@@ -15,16 +15,16 @@ fn vdc(mut k: u32, base: u32) -> f64 {
 }
 
 pub struct Vdcorput {
-    count: u32,
-    base: u32,
+    count: usize,
+    base: usize,
 }
 
 impl Vdcorput {
-    pub fn new(base: u32) -> Vdcorput {
+    pub fn new(base: usize) -> Self {
         Vdcorput { count: 0, base }
     }
 
-    pub fn new_default() -> Vdcorput {
+    pub fn new_default() -> Self {
         Vdcorput { count: 0, base: 2 }
     }
 
@@ -34,7 +34,7 @@ impl Vdcorput {
     }
 
     #[allow(dead_code)]
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: usize) {
         self.count = seed;
     }
 }
@@ -45,7 +45,7 @@ impl Vdcorput {
 //         self.count += 1;
 //         vdc(self.count, self.base)
 //     }
-// } 
+// }
 
 /**
  * @brief Halton sequence generator
@@ -57,7 +57,7 @@ pub struct Halton {
 }
 
 impl Halton {
-    pub fn new(base: &[u32]) -> Halton {
+    pub fn new(base: &[usize]) -> Self {
         Halton {
             vdc0: Vdcorput::new(base[0]),
             vdc1: Vdcorput::new(base[1]),
@@ -74,7 +74,7 @@ impl Halton {
      * @param seed
      */
     #[allow(dead_code)]
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: usize) {
         self.vdc0.reseed(seed);
         self.vdc1.reseed(seed);
     }
@@ -89,7 +89,7 @@ pub struct Circle {
 }
 
 impl Circle {
-    pub fn new(base: u32) -> Circle {
+    pub fn new(base: usize) -> Self {
         Circle {
             vdc: Vdcorput::new(base),
         }
@@ -102,7 +102,7 @@ impl Circle {
     }
 
     #[allow(dead_code)]
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: usize) {
         self.vdc.reseed(seed);
     }
 }
@@ -117,7 +117,7 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn new(base: &[u32]) -> Sphere {
+    pub fn new(base: &[usize]) -> Self {
         Sphere {
             vdc: Vdcorput::new(base[0]),
             cirgen: Circle::new(base[1]),
@@ -137,7 +137,7 @@ impl Sphere {
      * @param seed
      */
     #[allow(dead_code)]
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: usize) {
         self.cirgen.reseed(seed);
         self.vdc.reseed(seed);
     }
@@ -154,7 +154,7 @@ pub struct Sphere3Hopf {
 }
 
 impl Sphere3Hopf {
-    pub fn new(base: &[u32]) -> Sphere3Hopf {
+    pub fn new(base: &[usize]) -> Self {
         Sphere3Hopf {
             vdc0: Vdcorput::new(base[0]),
             vdc1: Vdcorput::new(base[1]),
@@ -177,7 +177,7 @@ impl Sphere3Hopf {
     }
 
     #[allow(dead_code)]
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: usize) {
         self.vdc0.reseed(seed);
         self.vdc1.reseed(seed);
         self.vdc2.reseed(seed);

@@ -1,4 +1,6 @@
-use super::{Vdcorput, Circle, Sphere};
+use super::{Circle, Sphere, Vdcorput};
+
+const TWO_PI: f64 = std::f64::consts::TAU;
 
 /**
  * @brief Halton(n) sequence generator
@@ -19,10 +21,10 @@ impl HaltonN {
      * @param n
      * @param base
      */
-    pub fn new(base: &[usize]) -> HaltonN {
+    pub fn new(base: &[usize]) -> Self {
         let mut vdcs = vec![];
         for b in base.iter() {
-            vdcs.push(Vdcorput::new(b));
+            vdcs.push(Vdcorput::new(*b));
         }
         HaltonN { vdcs }
     }
@@ -45,50 +47,24 @@ impl HaltonN {
      *
      * @param seed
      */
-    pub fn reseed(seed: usize) {
+    pub fn reseed(&mut self, seed: usize) {
         for vdc in self.vdcs.iter_mut() {
             vdc.reseed(seed);
         }
     }
 }
 
-/** Generate Sphere-3 Halton sequence */
-pub struct Sphere3 {
-    vdc: Vdcorput,
-    sphere2: Sphere,
-}
-
-/** Generate Sphere-3 Halton sequence */
-impl Sphere3 {
-    /**
-     * @brief Construct a new Sphere3 object
-     *
-     * @param base
-     */
-    pub fn new(base: &[usize]) -> Sphere3 {
-        Sphere3 {
-            vdc: Vdcorput::new(base[0]),
-            sphere2: Sphere::new(base[1..3]),
-        }
-    }
-
-    pub fn reseed(&mut self, seed: usize) {
-        self.vdc.reseed(seed);
-        self.Sphere2.reseed(seed);
-    }
-}
-
 /**
- * @brief Cylin2 sequence generator
+ * @brief CylinN2 sequence generator
  *
  */
-pub struct Cylin2 {
+pub struct CylinN2 {
     vdc: Vdcorput,
 }
 
-impl Cylin2 {
-    pub fn new(base: u32) -> Cylin2 {
-        Cylin2 {
+impl CylinN2 {
+    pub fn new(base: usize) -> Self {
+        CylinN2 {
             vdc: Vdcorput::new(base),
         }
     }
@@ -100,33 +76,9 @@ impl Cylin2 {
     }
 
     #[allow(dead_code)]
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: usize) {
         self.vdc.reseed(seed);
     }
-}
-
-/** Generate using cylindrical coordinate method */
-pub struct CylinN {
-    Vdcorput _vdc;
-    std::variant<Box<CylinN>, Box<Cylin2>> _Cgen;
-}
-
-/** Generate using cylindrical coordinate method */
-impl CylinN {
-    /**
-     * @brief Construct a new cylin n object
-     *
-     * @param n dimension
-     * @param base sequence base
-     */
-    CylinN(base: &[usize]);
-
-    /**
-     * @brief
-     *
-     * @return Vec<f64>
-     */
-    pub fn pop(&mut self) -> Vec<f64>;
 }
 
 /**
@@ -139,7 +91,7 @@ pub struct SphereN2 {
 }
 
 impl SphereN2 {
-    pub fn new(base: &[u32]) -> SphereN2 {
+    pub fn new(base: &[usize]) -> Self {
         SphereN2 {
             vdc: Vdcorput::new(base[0]),
             cirgen: Circle::new(base[1]),
@@ -159,18 +111,8 @@ impl SphereN2 {
      * @param seed
      */
     #[allow(dead_code)]
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: usize) {
         self.cirgen.reseed(seed);
         self.vdc.reseed(seed);
     }
 }
-
-/** Generate Sphere-3 Halton sequence */
-pub struct SphereN {
-    Vdcorput _vdc;
-    size_t _n;
-    std::variant<Box<SphereN>, Box<SphereN2>> _Sgen;
-    f64 _range_t;
-    f64 _t0;
-}
-

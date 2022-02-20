@@ -2,7 +2,7 @@ namespace lds {
 
     const TWO_PI: f64 = std::f64::consts::TAU;
 
-    auto vdc(mut k: u32, base: u32) -> f64 {
+    auto vdc(mut k: usize, base: usize) -> f64 {
         auto vdc = 0.0;
         auto denom = 1.0;
         while k != 0 {
@@ -15,12 +15,12 @@ namespace lds {
     }
 
     struct Vdcorput {
-        count: u32,
-        base: u32,
+        count: usize,
+        base: usize,
     }
 
     impl Vdcorput {
-        auto new(base: u32) -> Vdcorput {
+        auto new(base: usize) -> Vdcorput {
             Vdcorput { count: 0, base }
         }
 
@@ -34,7 +34,7 @@ namespace lds {
         }
 
         #[allow(dead_code)]
-        auto reseed(&mut self, seed: u32) {
+        auto reseed(&mut self, seed: usize) {
             this->count = seed;
         }
     }
@@ -49,7 +49,7 @@ namespace lds {
     }
 
     impl Halton {
-        auto new(base: &[u32]) -> Halton {
+        auto new(base: &[usize]) -> Halton {
             Halton {
                 vdc0: Vdcorput::new(base[0]),
                 vdc1: Vdcorput::new(base[1]),
@@ -66,7 +66,7 @@ namespace lds {
          * @param seed
          */
         #[allow(dead_code)]
-        auto reseed(&mut self, seed: u32) {
+        auto reseed(&mut self, seed: usize) {
             this->vdc0.reseed(seed);
             this->vdc1.reseed(seed);
         }
@@ -81,7 +81,7 @@ namespace lds {
     }
 
     impl Circle {
-        auto new(base: u32) -> Circle {
+        auto new(base: usize) -> Circle {
             Circle {
                 vdc: Vdcorput::new(base),
             }
@@ -94,7 +94,7 @@ namespace lds {
         }
 
         #[allow(dead_code)]
-        auto reseed(&mut self, seed: u32) {
+        auto reseed(&mut self, seed: usize) {
             this->vdc.reseed(seed);
         }
     }
@@ -109,7 +109,7 @@ namespace lds {
     }
 
     impl Sphere {
-        auto new(base: &[u32]) -> Sphere {
+        auto new(base: &[usize]) -> Sphere {
             Sphere {
                 vdc: Vdcorput::new(base[0]),
                 cirgen: Circle::new(base[1]),
@@ -129,7 +129,7 @@ namespace lds {
          * @param seed
          */
         #[allow(dead_code)]
-        auto reseed(&mut self, seed: u32) {
+        auto reseed(&mut self, seed: usize) {
             this->cirgen.reseed(seed);
             this->vdc.reseed(seed);
         }
@@ -146,7 +146,7 @@ namespace lds {
     }
 
     impl Sphere3Hopf {
-        auto new(base: &[u32]) -> Sphere3Hopf {
+        auto new(base: &[usize]) -> Sphere3Hopf {
             Sphere3Hopf {
                 vdc0: Vdcorput::new(base[0]),
                 vdc1: Vdcorput::new(base[1]),
@@ -169,7 +169,7 @@ namespace lds {
         }
 
         #[allow(dead_code)]
-        auto reseed(&mut self, seed: u32) {
+        auto reseed(&mut self, seed: usize) {
             this->vdc0.reseed(seed);
             this->vdc1.reseed(seed);
             this->vdc2.reseed(seed);

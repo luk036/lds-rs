@@ -1,8 +1,14 @@
 mod lib;
 use crate::lib::{Circle, Halton, Sphere, Sphere3Hopf, Vdcorput};
 
+// mod lds_n1;
+// use crate::lds_n1::{CylinN2, HaltonN, SphereN2};
+
+mod lds_n2;
+use crate::lds_n2::Sphere3;
+
 fn main() {
-    let base: [u32; 4] = [2, 3, 5, 7];
+    let base: [usize; 4] = [2, 3, 5, 7];
 
     let mut vgen = Vdcorput::new_default();
     for _i in 0..10 {
