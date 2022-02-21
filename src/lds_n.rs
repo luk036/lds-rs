@@ -1,62 +1,13 @@
 use super::{Circle, Sphere, Vdcorput};
 use ndarray::preclude::*;
-use csaps::CubicSmoothingSpline;
 
 const PI: f64 = std::f64::consts::PI;
 const HALF_PI: f64 = PI / 2.0;
 
-fn create_table() -> CubicSmoothingSpline {
-    let x = Array1::linspace(0.0, PI, 300);
-    let t = 0.5 * (&x - &x.mapv(f64::sin) - &x.mapv(f64::cos));
-    CubicSmoothingSpline::new(&t, &x)
-}
-
-const sp3: CubicSmoothingSpline = create_table();
-
-/** Generate Sphere-3 Halton sequence */
-pub struct Sphere3 {
-    vdc: Vdcorput,
-    sphere2: Sphere,
-}
-
-/** Generate Sphere-3 Halton sequence */
-impl Sphere3 {
-    /**
-     * @brief Construct a new Sphere3 object
-     *
-     * @param base
-     */
-    pub fn new(base: &[usize]) -> Self {
-        Sphere3 {
-            vdc: Vdcorput::new(base[0]),
-            sphere2: Sphere::new(&base[1..3]),
-        }
-    }
-
-    pub fn reseed(&mut self, seed: usize) {
-        self.vdc.reseed(seed);
-        self.sphere2.reseed(seed);
-    }
-
-    /**
-     * @brief
-     *
-     * @return Vec<f64>
-     */
-    pub fn Sphere3::pop() -> [f64; 4] {
-        let ti = HALF_PI * self.vdc.pop();  // map to [0, pi/2];
-        let xi = sp3.evaluate(&ti).unwrap();
-        let cosxi = xi[0].cos();
-        let sinxi = xi[0].sin();
-        let [s0, s1, s2] = self.sphere2();
-        [sinxi * s0, sinxi * s1, sinxi * s2, cosxi]
-    }
-}
-
 /** Generate using cylindrical coordinate method */
 pub struct CylinN {
     Vdcorput vdc;
-    std::variant<Box<CylinN>, Box<CylinN2>> _Cgen;
+    std::variant<Box<CylinN>, Box<Cylin2>> _Cgen;
 }
 
 impl CylinN {
@@ -70,7 +21,7 @@ impl CylinN {
         let mut n = base.len();
         assert(n >= 2);
         if (n == 2) {
-            self.Cgen = Box::<CylinN2>::new(base[1]);
+            self.Cgen = Box::<Cylin2>::new(base[1]);
         } else {
             self.Cgen = Box::<CylinN>::new(base[1..]);
         }

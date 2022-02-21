@@ -55,33 +55,6 @@ impl HaltonN {
 }
 
 /**
- * @brief CylinN2 sequence generator
- *
- */
-pub struct CylinN2 {
-    vdc: Vdcorput,
-}
-
-impl CylinN2 {
-    pub fn new(base: usize) -> Self {
-        CylinN2 {
-            vdc: Vdcorput::new(base),
-        }
-    }
-
-    pub fn pop(&mut self) -> Vec<f64> {
-        // let two_pi = 2.0 * (-1.0 as f64).acos(); // ???
-        let theta = self.vdc.pop() * TWO_PI; // map to [0, 2*pi];
-        vec![theta.sin(), theta.cos()]
-    }
-
-    #[allow(dead_code)]
-    pub fn reseed(&mut self, seed: usize) {
-        self.vdc.reseed(seed);
-    }
-}
-
-/**
  * @brief Sphere sequence generator
  *
  */
