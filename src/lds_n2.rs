@@ -2,9 +2,9 @@
 use interp::interp;
 use ndarray::{array, Array1};
 // use csaps::CubicSmoothingSpline;
-use super::{Sphere, Vdcorput};
+// use ndarray::Dim;
+use super::{Circle, Sphere, Vdcorput};
 use lazy_static::lazy_static;
-use ndarray::Dim;
 
 const TWO_PI: f64 = std::f64::consts::TAU;
 const PI: f64 = std::f64::consts::PI;
@@ -80,36 +80,9 @@ impl Sphere3 {
     }
 }
 
-/**
- * @brief Cylin2 sequence generator
- *
- */
-pub struct Cylin2 {
-    vdc: Vdcorput,
-}
-
-impl Cylin2 {
-    pub fn new(base: usize) -> Self {
-        Cylin2 {
-            vdc: Vdcorput::new(base),
-        }
-    }
-
-    pub fn pop(&mut self) -> Vec<f64> {
-        // let two_pi = 2.0 * (-1.0 as f64).acos(); // ???
-        let theta = self.vdc.pop() * TWO_PI; // map to [0, 2*pi];
-        vec![theta.sin(), theta.cos()]
-    }
-
-    #[allow(dead_code)]
-    pub fn reseed(&mut self, seed: usize) {
-        self.vdc.reseed(seed);
-    }
-}
-
 enum CylinVariant {
+    For2(Box<Circle>),
     ForN(Box<CylinN>),
-    For2(Box<Cylin2>),
 }
 
 /** Generate using cylindrical coordinate method */
@@ -129,13 +102,13 @@ impl CylinN {
         let n = base.len();
         assert!(n >= 2);
         let c_gen = if n == 2 {
-            CylinVariant::For2(Box::<Cylin2>::new(Cylin2::new(base[1])))
+            CylinVariant::For2(Box::<Circle>::new(Circle::new(base[1])))
         } else {
             CylinVariant::ForN(Box::<CylinN>::new(CylinN::new(&base[1..])))
         };
         CylinN {
             vdc: Vdcorput::new(base[0]),
-            c_gen
+            c_gen,
         }
     }
 
@@ -145,14 +118,14 @@ impl CylinN {
      * @return Vec<f64>
      */
     pub fn pop(&mut self) -> Vec<f64> {
-        let cosphi = 2.0 * self.vdc.pop() - 1.0;  // map to [-1, 1];
+        let cosphi = 2.0 * self.vdc.pop() - 1.0; // map to [-1, 1];
         let sinphi = (1.0 - cosphi * cosphi).sqrt();
 
         // ???
         let mut res = vec![];
         match &mut self.c_gen {
-            CylinVariant::ForN(gen_n) => { res = gen_n.pop() },
-            CylinVariant::For2(gen_2) => { res = gen_2.pop() },
+            CylinVariant::For2(gen_2) => res = gen_2.pop().to_vec(),
+            CylinVariant::ForN(gen_n) => res = gen_n.pop(),
         }
 
         for xi in res.iter_mut() {
@@ -162,4 +135,3 @@ impl CylinN {
         res
     }
 }
-

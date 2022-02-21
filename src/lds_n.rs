@@ -4,48 +4,6 @@ use ndarray::preclude::*;
 const PI: f64 = std::f64::consts::PI;
 const HALF_PI: f64 = PI / 2.0;
 
-/** Generate using cylindrical coordinate method */
-pub struct CylinN {
-    Vdcorput vdc;
-    std::variant<Box<CylinN>, Box<Cylin2>> _Cgen;
-}
-
-impl CylinN {
-    /**
-     * @brief Construct a new cylin n::cylin n object
-     *
-     * @param n
-     * @param base
-     */
-    CylinN(base: &[usize]) : vdc(base[0]) {
-        let mut n = base.len();
-        assert(n >= 2);
-        if (n == 2) {
-            self.Cgen = Box::<Cylin2>::new(base[1]);
-        } else {
-            self.Cgen = Box::<CylinN>::new(base[1..]);
-        }
-    }
-
-    /**
-     * @brief
-     *
-     * @return Vec<f64>
-     */
-    pub fn pop(&mut self) -> Vec<f64> {
-        let cosphi = 2.0 * self.vdc.pop() - 1.0;  // map to [-1, 1];
-        let sinphi = std::sqrt(1.0 - cosphi * cosphi);
-
-        // ???
-        let mut res = std::visit([](auto& t) { return (*t).pop(); }, self.Cgen);
-        for xi in res.iter_mut() {
-            *xi *= sinphi;
-        }
-        res.push(cosphi);
-        return res;
-    }
-}
-
 type XT = Array1;
 
 /**
@@ -107,16 +65,16 @@ pub fn get_sp() -> IntSinPowerTable& {
 
 /** Generate Sphere-3 Halton sequence */
 pub struct SphereN {
-    Vdcorput _vdc;
-    size_t _n;
-    std::variant<Box<SphereN>, Box<SphereN2>> _Sgen;
-    f64 _range_t;
-    f64 _t0;
+    Vdcorput vdc;
+    size_t n;
+    std::variant<Box<SphereN>, Box<SphereN2>> Sgen;
+    f64 range_t;
+    f64 t0;
 }
 
 // static IntSinPowerTable sp {};
 impl SphereN {
-    SphereN::SphereN(base: &[usize]) : _vdc(base[0]), _n(base.len()) {
+    SphereN::SphereN(base: &[usize]) : vdc(base[0]), n(base.len()) {
         let n = self.n;
         assert!(n >= 3);
 

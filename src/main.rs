@@ -5,7 +5,7 @@ mod lds_n1;
 // use crate::lds_n1::{Cylin2, HaltonN, SphereN2};
 
 mod lds_n2;
-use crate::lds_n2::{Sphere3, CylinN};
+use crate::lds_n2::{CylinN, Sphere3};
 
 fn main() {
     let base: [usize; 4] = [2, 3, 5, 7];
