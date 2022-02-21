@@ -34,4 +34,9 @@ fn main() {
     for _i in 0..10 {
         println!("{:?}", s3fgen.pop());
     }
+
+    let mut sgen = Sphere3::new(&base);
+    for _i in 0..10 {
+        println!("{:?}", sgen.pop());
+    }
 }
