@@ -1,4 +1,4 @@
-use super::{Circle, Sphere, Vdcorput};
+use super::{Circle, Vdcorput};
 
 const TWO_PI: f64 = std::f64::consts::TAU;
 
