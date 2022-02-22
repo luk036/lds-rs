@@ -4,6 +4,7 @@ use ndarray::Array1;
 // use ndarray::Dim;
 use super::{Sphere, Vdcorput};
 use lazy_static::lazy_static;
+use std::ops::Sub;
 
 const PI: f64 = std::f64::consts::PI;
 const TWO_PI: f64 = std::f64::consts::TAU;
@@ -63,12 +64,13 @@ impl Sphere3 {
         Sphere3 {
             vdc: Vdcorput::new(base[0]),
             sphere2: Sphere::new(&base[1..3]),
-            tp: 0.5 * (X.mapv(|x| x) - SINE.mapv(|x| x) + NEG_COSINE.mapv(|x| x)),
+            // tp: 0.5 * (X.mapv(|x| x) - SINE.mapv(|x| x) + NEG_COSINE.mapv(|x| x)),
+            tp: 0.5 * (X.clone() - SINE.clone() + NEG_COSINE.clone()),
         }
     }
 
     pub fn get_tp_minus1(&self) -> Array1<f64> {
-        NEG_COSINE.mapv(|x| x)
+        NEG_COSINE.clone()
     }
 
     pub fn get_tp(&self) -> Array1<f64> {
@@ -126,8 +128,8 @@ impl SphereN {
                 (SphereVariant::ForSn(Box::<SphereN>::new(s_minus1)), ssn_minus2)
             }
         };
-        let tp = (((n - 1) as f64) * &tp_minus2
-                    + &NEG_COSINE.mapv(|x| x) * &(SINE.mapv(|x| x.powi((n - 1) as i32))))
+        let tp = (((n - 1) as f64) * tp_minus2
+                    + NEG_COSINE.clone() * SINE.mapv(|x| x.powi((n - 1) as i32)))
                     / n as f64;
 
         SphereN {
@@ -144,7 +146,7 @@ impl SphereN {
     pub fn get_tp_minus1(&self) -> Array1<f64> {
         match &self.s_gen {
             // SphereVariant::ForS2(gen_2) => { X },
-            SphereVariant::ForS3(_) => NEG_COSINE.mapv(|x| x),
+            SphereVariant::ForS3(_) => NEG_COSINE.clone(),
             SphereVariant::ForSn(gen_n) => gen_n.get_tp(),
         }
     }
