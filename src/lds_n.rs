@@ -115,22 +115,25 @@ pub struct SphereN {
 impl SphereN {
     pub fn new(base: &[usize]) -> Self {
         let n = base.len();
-        assert!(n >= 4);
+        assert!(n >= 3);
         let (s_gen, tp_minus2) = match n {
             // 2 => (SphereVariant::ForS2(Box::<Sphere>::new(Sphere::new(&base[1..3]))), X),
             3 => (
-                SphereVariant::ForS3(Box::<Sphere3>::new(Sphere3::new(&base[1..4]))),
+                SphereVariant::ForS3(Box::<Sphere3>::new(Sphere3::new(&base[1..3]))),
                 NEG_COSINE.clone(),
             ),
             _ => {
                 let s_minus1 = SphereN::new(&base[1..]);
                 let ssn_minus2 = s_minus1.get_tp_minus1();
-                (SphereVariant::ForSn(Box::<SphereN>::new(s_minus1)), ssn_minus2)
+                (
+                    SphereVariant::ForSn(Box::<SphereN>::new(s_minus1)),
+                    ssn_minus2,
+                )
             }
         };
         let tp = (((n - 1) as f64) * tp_minus2
-                    + NEG_COSINE.clone() * SINE.mapv(|x| x.powi((n - 1) as i32)))
-                    / n as f64;
+            + NEG_COSINE.clone() * SINE.mapv(|x| x.powi((n - 1) as i32)))
+            / n as f64;
 
         SphereN {
             vdc: Vdcorput::new(base[0]),
@@ -146,7 +149,7 @@ impl SphereN {
     pub fn get_tp_minus1(&self) -> Array1<f64> {
         match &self.s_gen {
             // SphereVariant::ForS2(gen_2) => { X },
-            SphereVariant::ForS3(_) => NEG_COSINE.clone(),
+            SphereVariant::ForS3(gen_3) => gen_3.get_tp(),
             SphereVariant::ForSn(gen_n) => gen_n.get_tp(),
         }
     }
