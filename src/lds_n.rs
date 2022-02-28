@@ -1,18 +1,10 @@
 use interp::interp;
 use ndarray::Array1;
-// use csaps::CubicSmoothingSpline;
-// use ndarray::Dim;
 use super::{Sphere, Vdcorput};
 use lazy_static::lazy_static;
-use std::ops::Sub;
 
 const PI: f64 = std::f64::consts::PI;
-const TWO_PI: f64 = std::f64::consts::TAU;
 const HALF_PI: f64 = PI / 2.0;
-
-// const HALF_PI: f64 = PI / 2.0;
-
-type Xt = Array1<f64>;
 
 lazy_static! {
     static ref X: Array1<f64> = Array1::linspace(0.0, PI, 300);
@@ -69,10 +61,6 @@ impl Sphere3 {
         }
     }
 
-    pub fn get_tp_minus1(&self) -> Array1<f64> {
-        NEG_COSINE.clone()
-    }
-
     pub fn get_tp(&self) -> Array1<f64> {
         self.tp.clone()
     }
@@ -115,11 +103,11 @@ pub struct SphereN {
 impl SphereN {
     pub fn new(base: &[usize]) -> Self {
         let n = base.len();
-        assert!(n >= 3);
+        assert!(n >= 4);
         let (s_gen, tp_minus2) = match n {
             // 2 => (SphereVariant::ForS2(Box::<Sphere>::new(Sphere::new(&base[1..3]))), X),
-            3 => (
-                SphereVariant::ForS3(Box::<Sphere3>::new(Sphere3::new(&base[1..3]))),
+            4 => (
+                SphereVariant::ForS3(Box::<Sphere3>::new(Sphere3::new(&base[1..4]))),
                 NEG_COSINE.clone(),
             ),
             _ => {
@@ -172,6 +160,7 @@ impl SphereN {
 }
 
 // First 1000 prime numbers;
+#[allow(dead_code)]
 const PRIME_TABLE: [usize; 1000] = [
     2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
     101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193,

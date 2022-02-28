@@ -1,17 +1,11 @@
 mod lib;
-use crate::lib::{Circle, Halton, Sphere, Sphere3Hopf, Vdcorput};
-
-mod lds_n1;
-// use crate::lds_n1::{Cylin2, HaltonN, SphereN2};
-
-mod lds_n2;
-use crate::lds_n2::CylinN;
+use crate::lib::{Circle, Halton, Sphere, Sphere3Hopf, HaltonN, CylinN, Vdcorput};
 
 mod lds_n;
 use crate::lds_n::{Sphere3, SphereN};
 
 fn main() {
-    let base: [usize; 4] = [2, 3, 5, 7];
+    let base: [usize; 5] = [2, 3, 5, 7, 11];
 
     let mut vgen = Vdcorput::new_default();
     for _i in 0..10 {
@@ -43,8 +37,18 @@ fn main() {
         println!("{:?}", sgen.pop());
     }
 
+    let mut hgen = HaltonN::new(&base);
+    for _i in 0..10 {
+        println!("{:?}", hgen.pop());
+    }
+
     let mut cgen = CylinN::new(&base);
     for _i in 0..10 {
         println!("{:?}", cgen.pop());
+    }
+
+    let mut sgen = SphereN::new(&base);
+    for _i in 0..10 {
+        println!("{:?}", sgen.pop());
     }
 }
