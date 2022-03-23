@@ -12,31 +12,19 @@ lazy_static! {
     static ref SINE: Array1<f64> = X.mapv(f64::sin);
 }
 
-/*
-struct Sp3Table {
-    t: Vec<f64>,
-}
-
-impl Sp3Table {
-    fn new() -> Self {
-        let t_: Array1<f64> = (X.mapv(|x| x) - SINE.mapv(|x| x) - NEG_COSINE.mapv(|x| x)) * 0.5;
-        Sp3Table { t: t_.to_vec() }
-    }
-
-    fn evaluate(&self, ti: f64) -> f64 {
-        interp(&self.t, &X.to_vec(), ti)
-    }
+struct Gl {
+    x: Array1<f64>,
+    neg_cosine: Array1<f64>,
+    sine: Array1<f64>,
 }
 
 lazy_static! {
-    static ref SP3: Sp3Table = Sp3Table::new();
+    static ref GL: Gl = Gl { 
+        x: Array1::linspace(0.0, PI, 300),
+        neg_cosine: -X.mapv(f64::cos),
+        sine: X.mapv(f64::sin),
+    };
 }
-*/
-
-// const x: Array1<f64> = Array1::linspace(0.0, PI, 300);
-// const t: Array1<f64> = 0.5 * (&x - &x.mapv(f64::sin) - &x.mapv(f64::cos));
-// const sp3: CubicSmoothingSpline<f64, Ix1> =
-//            CubicSmoothingSpline::new(&t, &x).make().unwrap();
 
 /** Generate Sphere-3 Halton sequence */
 pub struct Sphere3 {
@@ -57,12 +45,12 @@ impl Sphere3 {
             vdc: Vdcorput::new(base[0]),
             sphere2: Sphere::new(&base[1..3]),
             // tp: 0.5 * (X.mapv(|x| x) - SINE.mapv(|x| x) + NEG_COSINE.mapv(|x| x)),
-            tp: 0.5 * (X.clone() - SINE.clone() + NEG_COSINE.clone()),
+            tp: 0.5 * (&GL.x - &GL.sine + NEG_COSINE.clone()),
         }
     }
 
-    pub fn get_tp(&self) -> Array1<f64> {
-        self.tp.clone()
+    pub fn get_tp(&self) -> &Array1<f64> {
+        &self.tp
     }
 
     pub fn reseed(&mut self, seed: usize) {
@@ -77,7 +65,6 @@ impl Sphere3 {
      */
     pub fn pop(&mut self) -> [f64; 4] {
         let ti = HALF_PI * self.vdc.pop(); // map to [0, pi/2];
-                                           // let tiwrap = array![ti];
         let xi = interp(&self.tp.to_vec(), &X.to_vec(), ti);
         let cosxi = xi.cos();
         let sinxi = xi.sin();
@@ -105,14 +92,13 @@ impl SphereN {
         let n = base.len();
         assert!(n >= 4);
         let (s_gen, tp_minus2) = match n {
-            // 2 => (SphereVariant::ForS2(Box::<Sphere>::new(Sphere::new(&base[1..3]))), X),
             4 => (
                 SphereVariant::ForS3(Box::<Sphere3>::new(Sphere3::new(&base[1..4]))),
                 NEG_COSINE.clone(),
             ),
             _ => {
                 let s_minus1 = SphereN::new(&base[1..]);
-                let ssn_minus2 = s_minus1.get_tp_minus1();
+                let ssn_minus2 = s_minus1.get_tp_minus1().clone();
                 (
                     SphereVariant::ForSn(Box::<SphereN>::new(s_minus1)),
                     ssn_minus2,
@@ -130,11 +116,11 @@ impl SphereN {
         }
     }
 
-    pub fn get_tp(&self) -> Array1<f64> {
-        self.tp.clone()
+    pub fn get_tp(&self) -> &Array1<f64> {
+        &self.tp
     }
 
-    pub fn get_tp_minus1(&self) -> Array1<f64> {
+    pub fn get_tp_minus1(&self) -> &Array1<f64> {
         match &self.s_gen {
             // SphereVariant::ForS2(gen_2) => { X },
             SphereVariant::ForS3(gen_3) => gen_3.get_tp(),
