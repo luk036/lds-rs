@@ -1,7 +1,7 @@
-use interp::interp;
-use ndarray::Array1;
 use super::{Sphere, Vdcorput};
+use interp::interp;
 use lazy_static::lazy_static;
+use ndarray::Array1;
 
 const PI: f64 = std::f64::consts::PI;
 const HALF_PI: f64 = PI / 2.0;
@@ -19,7 +19,7 @@ struct Gl {
 }
 
 lazy_static! {
-    static ref GL: Gl = Gl { 
+    static ref GL: Gl = Gl {
         x: Array1::linspace(0.0, PI, 300),
         neg_cosine: -X.mapv(f64::cos),
         sine: X.mapv(f64::sin),

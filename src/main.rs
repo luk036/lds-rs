@@ -1,5 +1,5 @@
 mod lib;
-use crate::lib::{Circle, Halton, Sphere, Sphere3Hopf, HaltonN, CylinN, Vdcorput};
+use crate::lib::{Circle, CylinN, Halton, HaltonN, Sphere, Sphere3Hopf, Vdcorput};
 
 mod lds_n;
 use crate::lds_n::{Sphere3, SphereN};
