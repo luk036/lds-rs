@@ -1,4 +1,4 @@
-use super::{Sphere, Vdcorput};
+use crate::lds::{Sphere, Vdcorput};
 use interp::interp;
 use lazy_static::lazy_static;
 use ndarray::Array1;
@@ -8,8 +8,6 @@ const HALF_PI: f64 = PI / 2.0;
 
 lazy_static! {
     static ref X: Array1<f64> = Array1::linspace(0.0, PI, 300);
-    static ref NEG_COSINE: Array1<f64> = -X.mapv(f64::cos);
-    static ref SINE: Array1<f64> = X.mapv(f64::sin);
 }
 
 struct Gl {
@@ -45,7 +43,7 @@ impl Sphere3 {
             vdc: Vdcorput::new(base[0]),
             sphere2: Sphere::new(&base[1..3]),
             // tp: 0.5 * (X.mapv(|x| x) - SINE.mapv(|x| x) + NEG_COSINE.mapv(|x| x)),
-            tp: 0.5 * (&GL.x - &GL.sine + NEG_COSINE.clone()),
+            tp: 0.5 * (&GL.x - &GL.sine + &GL.neg_cosine),
         }
     }
 
@@ -94,7 +92,7 @@ impl SphereN {
         let (s_gen, tp_minus2) = match n {
             4 => (
                 SphereVariant::ForS3(Box::<Sphere3>::new(Sphere3::new(&base[1..4]))),
-                NEG_COSINE.clone(),
+                GL.neg_cosine.clone(),
             ),
             _ => {
                 let s_minus1 = SphereN::new(&base[1..]);
@@ -106,7 +104,7 @@ impl SphereN {
             }
         };
         let tp = (((n - 1) as f64) * tp_minus2
-            + NEG_COSINE.clone() * SINE.mapv(|x| x.powi((n - 1) as i32)))
+            + &GL.neg_cosine * &GL.sine.mapv(|x| x.powi((n - 1) as i32)))
             / n as f64;
 
         SphereN {
