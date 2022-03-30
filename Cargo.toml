@@ -7,6 +7,5 @@ edition = "2021"
 
 [dependencies]
 ndarray = { version = "0.15.4" }
-csaps = { version = "0.3.0" }
 lazy_static = { version = "1.4.0" }
 interp = { version = "0.1.1" }

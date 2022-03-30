@@ -24,10 +24,6 @@ impl Vdcorput {
         Vdcorput { count: 0, base }
     }
 
-    pub fn new_default() -> Self {
-        Vdcorput { count: 0, base: 2 }
-    }
-
     pub fn pop(&mut self) -> f64 {
         self.count += 1;
         vdc(self.count, self.base)
@@ -181,111 +177,5 @@ impl Sphere3Hopf {
         self.vdc0.reseed(seed);
         self.vdc1.reseed(seed);
         self.vdc2.reseed(seed);
-    }
-}
-
-/**
- * @brief Halton(n) sequence generator
- *
- */
-pub struct HaltonN {
-    vdcs: Vec<Vdcorput>,
-}
-
-/**
- * @brief Halton(n) sequence generator
- *
- */
-impl HaltonN {
-    /**
-     * @brief Construct a new halton n object
-     *
-     * @param n
-     * @param base
-     */
-    pub fn new(base: &[usize]) -> Self {
-        let mut vdcs = vec![];
-        for b in base.iter() {
-            vdcs.push(Vdcorput::new(*b));
-        }
-        HaltonN { vdcs }
-    }
-
-    /**
-     * @brief
-     *
-     * @return let mut
-     */
-    pub fn pop(&mut self) -> Vec<f64> {
-        let mut res = vec![];
-        for vdc in self.vdcs.iter_mut() {
-            res.push(vdc.pop());
-        }
-        return res;
-    }
-
-    /**
-     * @brief
-     *
-     * @param seed
-     */
-    pub fn reseed(&mut self, seed: usize) {
-        for vdc in self.vdcs.iter_mut() {
-            vdc.reseed(seed);
-        }
-    }
-}
-
-enum CylinVariant {
-    For2(Box<Circle>),
-    ForN(Box<CylinN>),
-}
-
-/** Generate using cylindrical coordinate method */
-pub struct CylinN {
-    vdc: Vdcorput,
-    c_gen: CylinVariant,
-}
-
-impl CylinN {
-    /**
-     * @brief Construct a new cylin n::cylin n object
-     *
-     * @param n
-     * @param base
-     */
-    pub fn new(base: &[usize]) -> Self {
-        let n = base.len();
-        assert!(n >= 2);
-        let c_gen = if n == 2 {
-            CylinVariant::For2(Box::<Circle>::new(Circle::new(base[1])))
-        } else {
-            CylinVariant::ForN(Box::<CylinN>::new(CylinN::new(&base[1..])))
-        };
-        CylinN {
-            vdc: Vdcorput::new(base[0]),
-            c_gen,
-        }
-    }
-
-    /**
-     * @brief
-     *
-     * @return Vec<f64>
-     */
-    pub fn pop(&mut self) -> Vec<f64> {
-        let cosphi = 2.0 * self.vdc.pop() - 1.0; // map to [-1, 1];
-        let sinphi = (1.0 - cosphi * cosphi).sqrt();
-
-        // ???
-        let mut res = match &mut self.c_gen {
-            CylinVariant::For2(gen_2) => gen_2.pop().to_vec(),
-            CylinVariant::ForN(gen_n) => gen_n.pop(),
-        };
-        for xi in res.iter_mut() {
-            *xi *= sinphi;
-        }
-        res.push(cosphi);
-        res
     }
 }
