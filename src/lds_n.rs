@@ -43,7 +43,7 @@ impl Sphere3 {
             vdc: Vdcorput::new(base[0]),
             sphere2: Sphere::new(&base[1..3]),
             // tp: 0.5 * (X.mapv(|x| x) - SINE.mapv(|x| x) + NEG_COSINE.mapv(|x| x)),
-            tp: 0.5 * (&GL.x - &GL.sine + &GL.neg_cosine),
+            tp: 0.5 * (&GL.x - &GL.sine * &GL.neg_cosine),
         }
     }
 
@@ -87,9 +87,9 @@ pub struct SphereN {
 // static IntSinPowerTable sp {};
 impl SphereN {
     pub fn new(base: &[usize]) -> Self {
-        let n = base.len();
-        assert!(n >= 4);
-        let (s_gen, tp_minus2) = match n {
+        let m = base.len();
+        assert!(m >= 4);
+        let (s_gen, tp_minus2) = match m {
             4 => (
                 SphereVariant::ForS3(Box::<Sphere3>::new(Sphere3::new(&base[1..4]))),
                 GL.neg_cosine.clone(),
@@ -103,6 +103,7 @@ impl SphereN {
                 )
             }
         };
+        let n = m - 1;
         let tp = (((n - 1) as f64) * tp_minus2
             + &GL.neg_cosine * &GL.sine.mapv(|x| x.powi((n - 1) as i32)))
             / n as f64;
@@ -128,7 +129,7 @@ impl SphereN {
 
     pub fn pop(&mut self) -> Vec<f64> {
         let vd = self.vdc.pop();
-        let ti = self.tp[0] + self.tp[self.tp.len() - 1] * vd; // map to [t0, tm-1];
+        let ti = self.tp[0] + (self.tp[self.tp.len() - 1] - self.tp[0]) * vd; // map to [t0, tm-1];
         let xi = interp(&self.tp.to_vec(), &X.to_vec(), ti);
         let sinphi = xi.sin();
         let mut res = match &mut self.s_gen {
