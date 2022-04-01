@@ -1,4 +1,4 @@
-use crate::lds::{Circle, Halton, Sphere, Vdcorput};
+use crate::lds::{Circle, Sphere, Vdcorput};
 use interp::interp;
 use lazy_static::lazy_static;
 use ndarray::Array1;
