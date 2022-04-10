@@ -142,6 +142,16 @@ impl SphereN {
         res.push(xi.cos());
         return res;
     }
+
+    #[allow(dead_code)]
+    pub fn reseed(&mut self, seed: usize) {
+        self.vdc.reseed(seed);
+        match &mut self.s_gen {
+            // SphereVariant::ForS2(gen_2) => { X },
+            SphereVariant::ForS3(gen_3) => gen_3.reseed(seed),
+            SphereVariant::ForSn(gen_n) => gen_n.reseed(seed),
+        }
+    }
 }
 
 /**
@@ -171,12 +181,7 @@ impl HaltonN {
         HaltonN { vdcs }
     }
 
-    /**
-     * @brief
-     *
-     * @return let mut
-     */
-    pub fn pop(&mut self) -> Vec<f64> {
+    pub fn pop_vec(&mut self) -> Vec<f64> {
         let mut res = vec![];
         for vdc in self.vdcs.iter_mut() {
             res.push(vdc.pop());
@@ -184,11 +189,6 @@ impl HaltonN {
         return res;
     }
 
-    /**
-     * @brief
-     *
-     * @param seed
-     */
     pub fn reseed(&mut self, seed: usize) {
         for vdc in self.vdcs.iter_mut() {
             vdc.reseed(seed);
@@ -233,20 +233,93 @@ impl CylinN {
      *
      * @return Vec<f64>
      */
-    pub fn pop(&mut self) -> Vec<f64> {
+    pub fn pop_vec(&mut self) -> Vec<f64> {
         let cosphi = 2.0 * self.vdc.pop() - 1.0; // map to [-1, 1];
         let sinphi = (1.0 - cosphi * cosphi).sqrt();
 
         // ???
         let mut res = match &mut self.c_gen {
             CylinVariant::For2(gen_2) => gen_2.pop().to_vec(),
-            CylinVariant::ForN(gen_n) => gen_n.pop(),
+            CylinVariant::ForN(gen_n) => gen_n.pop_vec(),
         };
         for xi in res.iter_mut() {
             *xi *= sinphi;
         }
         res.push(cosphi);
         res
+    }
+
+    #[allow(dead_code)]
+    pub fn reseed(&mut self, seed: usize) {
+        self.vdc.reseed(seed);
+        match &mut self.c_gen {
+            // SphereVariant::ForS2(gen_2) => { X },
+            CylinVariant::For2(gen_2) => gen_2.reseed(seed),
+            CylinVariant::ForN(gen_n) => gen_n.reseed(seed),
+        }
+    }
+}
+
+pub trait Cylind {
+    // fn new(base: &[usize]) -> Self;
+    fn pop_vec(&mut self) -> Vec<f64>;
+    fn reseed(&mut self, seed: usize);
+}
+
+impl Cylind for Circle {
+    fn pop_vec(&mut self) -> Vec<f64> {
+        self.pop().to_vec()
+    }
+
+    fn reseed(&mut self, seed: usize) {
+        self.reseed(seed);
+    }
+}
+
+/** Generate using cylindrical coordinate method */
+pub struct CylindN {
+    vdc: Vdcorput,
+    c_gen: Box<dyn Cylind>,
+}
+
+impl CylindN {
+    /**
+     * @brief Construct a new cylin n::cylin n object
+     *
+     * @param n
+     * @param base
+     */
+    #[allow(dead_code)]
+    pub fn new(base: &[usize]) -> Self {
+        let n = base.len();
+        assert!(n >= 2);
+        let c_gen: Box<dyn Cylind> = if n == 2 {
+            Box::new(Circle::new(base[1]))
+        } else {
+            Box::new(CylindN::new(&base[1..]))
+        };
+        CylindN {
+            vdc: Vdcorput::new(base[0]),
+            c_gen,
+        }
+    }
+}
+
+impl Cylind for CylindN {
+    fn pop_vec(&mut self) -> Vec<f64> {
+        let cosphi = 2.0 * self.vdc.pop() - 1.0; // map to [-1, 1];
+        let sinphi = (1.0 - cosphi * cosphi).sqrt();
+        let mut res = self.c_gen.pop_vec();
+        for xi in res.iter_mut() {
+            *xi *= sinphi;
+        }
+        res.push(cosphi);
+        res
+    }
+
+    fn reseed(&mut self, seed: usize) {
+        self.vdc.reseed(seed);
+        self.c_gen.reseed(seed);
     }
 }
 

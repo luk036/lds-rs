@@ -1,10 +1,14 @@
 pub mod lds;
 pub mod lds_n;
 
+pub use crate::lds::{Circle, Halton, Sphere, Sphere3Hopf, Vdcorput};
+pub use crate::lds_n::{CylinN, CylindN, HaltonN, Sphere3, SphereN};
+pub use crate::lds_n::Cylind;  // Trait
+
 #[cfg(test)]
-mod test {
-    use super::lds::{Circle, Halton, Sphere, Sphere3Hopf, Vdcorput};
-    use super::lds_n::{CylinN, HaltonN, Sphere3, SphereN};
+mod tests {
+    use super::lds::*;
+    use super::lds_n::*;
 
     #[test]
     fn it_works() {
@@ -49,17 +53,23 @@ mod test {
         let mut hgen = HaltonN::new(&base);
         hgen.reseed(10);
         for _i in 0..10 {
-            println!("{:?}", hgen.pop());
+            println!("{:?}", hgen.pop_vec());
         }
 
         let mut cgen = CylinN::new(&base);
         // cgen.reseed(10);
         for _i in 0..10 {
-            println!("{:?}", cgen.pop());
+            println!("{:?}", cgen.pop_vec());
+        }
+
+        let mut cgen = CylindN::new(&base);
+        // cgen.reseed(10);
+        for _i in 0..10 {
+            println!("{:?}", cgen.pop_vec());
         }
 
         let mut sgen = SphereN::new(&base);
-        // sgen.reseed(10);
+        sgen.reseed(10);
         for _i in 0..10 {
             println!("{:?}", sgen.pop());
         }

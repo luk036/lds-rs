@@ -14,6 +14,19 @@ fn vdc(mut k: usize, base: usize) -> f64 {
     vdc
 }
 
+/// Van der Corput sequence generator 
+///
+/// # Examples
+///
+/// ```
+/// use lds_rs::Vdcorput;
+///
+/// let mut vgen = Vdcorput::new(2);
+/// vgen.reseed(10);
+/// let result = vgen.pop();
+/// 
+/// assert_eq!(result, 0.8125);
+/// ```
 pub struct Vdcorput {
     count: usize,
     base: usize,
@@ -29,7 +42,6 @@ impl Vdcorput {
         vdc(self.count, self.base)
     }
 
-    #[allow(dead_code)]
     pub fn reseed(&mut self, seed: usize) {
         self.count = seed;
     }
@@ -43,10 +55,19 @@ impl Vdcorput {
 //     }
 // }
 
-/**
- * @brief Halton sequence generator
- *
- */
+/// Halton sequence generator 
+///
+/// # Examples
+///
+/// ```
+/// use lds_rs::Halton;
+///
+/// let mut hgen = Halton::new(&[2, 3]);
+/// hgen.reseed(10);
+/// let result = hgen.pop();
+/// 
+/// assert_eq!(result[0], 0.8125);
+/// ```
 pub struct Halton {
     vdc0: Vdcorput,
     vdc1: Vdcorput,
@@ -76,10 +97,19 @@ impl Halton {
     }
 }
 
-/**
- * @brief Circle sequence generator
- *
- */
+/// Circle sequence generator 
+///
+/// # Examples
+///
+/// ```
+/// use lds_rs::Circle;
+///
+/// let mut cgen = Circle::new(2);
+/// cgen.reseed(1);
+/// let result = cgen.pop();
+/// 
+/// assert_eq!(result[0], 1.0);
+/// ```
 pub struct Circle {
     vdc: Vdcorput,
 }
@@ -103,10 +133,19 @@ impl Circle {
     }
 }
 
-/**
- * @brief Sphere sequence generator
- *
- */
+/// Sphere sequence generator 
+///
+/// # Examples
+///
+/// ```
+/// use lds_rs::Sphere;
+///
+/// let mut sgen = Sphere::new(&[2, 3]);
+/// sgen.reseed(1);
+/// let result = sgen.pop();
+/// 
+/// assert_eq!(result[2], -0.5);
+/// ```
 pub struct Sphere {
     vdc: Vdcorput,
     cirgen: Circle,
@@ -139,10 +178,19 @@ impl Sphere {
     }
 }
 
-/**
- * @brief S(3) sequence generator by Hopf
- *
- */
+/// S(3) sequence generator by Hopf coordinates
+///
+/// # Examples
+///
+/// ```
+/// use lds_rs::Sphere3Hopf;
+///
+/// let mut sgen = Sphere3Hopf::new(&[2, 3, 5]);
+/// sgen.reseed(0);
+/// let result = sgen.pop();
+/// 
+/// assert_eq!(result[2], 0.4472135954999573);
+/// ```
 pub struct Sphere3Hopf {
     vdc0: Vdcorput,
     vdc1: Vdcorput,
