@@ -24,6 +24,13 @@ lazy_static! {
     };
 }
 
+pub trait SphereGen {
+    // fn new(base: &[usize]) -> Self;
+    fn pop_vec(&mut self) -> Vec<f64>;
+    fn reseed(&mut self, seed: usize);
+    fn get_tp(&self) -> &Array1<f64>;
+}
+
 /** Generate Sphere-3 Halton sequence */
 pub struct Sphere3 {
     vdc: Vdcorput,
@@ -47,20 +54,6 @@ impl Sphere3 {
         }
     }
 
-    pub fn get_tp(&self) -> &Array1<f64> {
-        &self.tp
-    }
-
-    pub fn reseed(&mut self, seed: usize) {
-        self.vdc.reseed(seed);
-        self.sphere2.reseed(seed);
-    }
-
-    /**
-     * @brief
-     *
-     * @return Vec<f64>
-     */
     pub fn pop(&mut self) -> [f64; 4] {
         let ti = HALF_PI * self.vdc.pop(); // map to [0, pi/2];
         let xi = interp(&self.tp.to_vec(), &X.to_vec(), ti);
@@ -68,6 +61,21 @@ impl Sphere3 {
         let sinxi = xi.sin();
         let [s0, s1, s2] = self.sphere2.pop();
         [sinxi * s0, sinxi * s1, sinxi * s2, cosxi]
+    }
+}
+
+impl SphereGen for Sphere3 {
+    fn reseed(&mut self, seed: usize) {
+        self.vdc.reseed(seed);
+        self.sphere2.reseed(seed);
+    }
+
+    fn pop_vec(&mut self) -> Vec<f64> {
+        self.pop().to_vec()
+    }
+
+    fn get_tp(&self) -> &Array1<f64> {
+        &self.tp
     }
 }
 
@@ -127,20 +135,20 @@ impl SphereN {
         }
     }
 
-    pub fn pop(&mut self) -> Vec<f64> {
+    pub fn pop_vec(&mut self) -> Vec<f64> {
         let vd = self.vdc.pop();
         let ti = self.tp[0] + (self.tp[self.tp.len() - 1] - self.tp[0]) * vd; // map to [t0, tm-1];
         let xi = interp(&self.tp.to_vec(), &X.to_vec(), ti);
         let sinphi = xi.sin();
         let mut res = match &mut self.s_gen {
             SphereVariant::ForS3(gen_3) => gen_3.pop().to_vec(),
-            SphereVariant::ForSn(gen_n) => gen_n.pop(),
+            SphereVariant::ForSn(gen_n) => gen_n.pop_vec(),
         };
         for xi in res.iter_mut() {
             *xi *= sinphi;
         }
         res.push(xi.cos());
-        return res;
+        res
     }
 
     #[allow(dead_code)]
@@ -151,6 +159,72 @@ impl SphereN {
             SphereVariant::ForS3(gen_3) => gen_3.reseed(seed),
             SphereVariant::ForSn(gen_n) => gen_n.reseed(seed),
         }
+    }
+}
+
+/** Generate Sphere-3 Halton sequence */
+pub struct NSphere {
+    vdc: Vdcorput,
+    s_gen: Box<dyn SphereGen>,
+    tp: Array1<f64>,
+}
+
+// static IntSinPowerTable sp {};
+impl NSphere {
+    pub fn new(base: &[usize]) -> Self {
+        let m = base.len();
+        assert!(m >= 4);
+        let (s_gen, tp_minus2) : (Box<dyn SphereGen>, Array1<f64>) = if m == 4 {
+            (
+                Box::new(Sphere3::new(&base[1..4])),
+                GL.neg_cosine.clone(),
+            )
+        } else {
+            let s_minus1 = NSphere::new(&base[1..]);
+            let ssn_minus2 = s_minus1.get_tp_minus1().clone();
+            (
+                Box::new(NSphere::new(&base[1..])),
+                ssn_minus2,
+            )
+        };
+        let n = m - 1;
+        let tp = (((n - 1) as f64) * tp_minus2
+            + &GL.neg_cosine * &GL.sine.mapv(|x| x.powi((n - 1) as i32)))
+            / n as f64;
+        NSphere {
+            vdc: Vdcorput::new(base[0]),
+            s_gen,
+            tp,
+        }
+    }
+
+    pub fn get_tp_minus1(&self) -> &Array1<f64> {
+        self.s_gen.get_tp()
+    }
+}
+
+impl SphereGen for NSphere {
+    #[allow(dead_code)]
+    fn reseed(&mut self, seed: usize) {
+        self.vdc.reseed(seed);
+        self.s_gen.reseed(seed);
+    }
+
+    fn get_tp(&self) -> &Array1<f64> {
+        &self.tp
+    }
+
+    fn pop_vec(&mut self) -> Vec<f64> {
+        let vd = self.vdc.pop();
+        let ti = self.tp[0] + (self.tp[self.tp.len() - 1] - self.tp[0]) * vd; // map to [t0, tm-1];
+        let xi = interp(&self.tp.to_vec(), &X.to_vec(), ti);
+        let sinphi = xi.sin();
+        let mut res = self.s_gen.pop_vec();
+        for xi in res.iter_mut() {
+            *xi *= sinphi;
+        }
+        res.push(xi.cos());
+        res
     }
 }
 
@@ -186,7 +260,7 @@ impl HaltonN {
         for vdc in self.vdcs.iter_mut() {
             res.push(vdc.pop());
         }
-        return res;
+        res
     }
 
     pub fn reseed(&mut self, seed: usize) {

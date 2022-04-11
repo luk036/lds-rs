@@ -2,8 +2,8 @@ pub mod lds;
 pub mod lds_n;
 
 pub use crate::lds::{Circle, Halton, Sphere, Sphere3Hopf, Vdcorput};
-pub use crate::lds_n::{CylinN, CylindN, HaltonN, Sphere3, SphereN};
-pub use crate::lds_n::Cylind;  // Trait
+pub use crate::lds_n::{Cylind, SphereGen}; // Traits
+pub use crate::lds_n::{CylinN, CylindN, HaltonN, Sphere3, SphereN, NSphere}; 
 
 #[cfg(test)]
 mod tests {
@@ -71,7 +71,13 @@ mod tests {
         let mut sgen = SphereN::new(&base);
         sgen.reseed(10);
         for _i in 0..10 {
-            println!("{:?}", sgen.pop());
+            println!("{:?}", sgen.pop_vec());
+        }
+
+        let mut sgen = NSphere::new(&base);
+        sgen.reseed(10);
+        for _i in 0..10 {
+            println!("{:?}", sgen.pop_vec());
         }
     }
 }

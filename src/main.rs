@@ -2,8 +2,8 @@ mod lds;
 use crate::lds::{Circle, Halton, Sphere, Sphere3Hopf, Vdcorput};
 
 mod lds_n;
-use crate::lds_n::{CylinN, CylindN, HaltonN, Sphere3, SphereN};
-use crate::lds_n::Cylind;  // Trait
+use crate::lds_n::{Cylind, SphereGen}; // Traits
+use crate::lds_n::{CylinN, CylindN, HaltonN, Sphere3, SphereN, NSphere};
 
 fn main() {
     let base: [usize; 5] = [2, 3, 5, 7, 11];
@@ -65,6 +65,12 @@ fn main() {
     let mut sgen = SphereN::new(&base);
     // sgen.reseed(10);
     for _i in 0..10 {
-        println!("{:?}", sgen.pop());
+        println!("{:?}", sgen.pop_vec());
+    }
+
+    let mut sgen = NSphere::new(&base);
+    // sgen.reseed(10);
+    for _i in 0..10 {
+        println!("{:?}", sgen.pop_vec());
     }
 }

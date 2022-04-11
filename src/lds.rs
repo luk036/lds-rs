@@ -14,7 +14,7 @@ fn vdc(mut k: usize, base: usize) -> f64 {
     vdc
 }
 
-/// Van der Corput sequence generator 
+/// Van der Corput sequence generator
 ///
 /// # Examples
 ///
@@ -24,7 +24,7 @@ fn vdc(mut k: usize, base: usize) -> f64 {
 /// let mut vgen = Vdcorput::new(2);
 /// vgen.reseed(10);
 /// let result = vgen.pop();
-/// 
+///
 /// assert_eq!(result, 0.8125);
 /// ```
 pub struct Vdcorput {
@@ -55,7 +55,7 @@ impl Vdcorput {
 //     }
 // }
 
-/// Halton sequence generator 
+/// Halton sequence generator
 ///
 /// # Examples
 ///
@@ -65,7 +65,7 @@ impl Vdcorput {
 /// let mut hgen = Halton::new(&[2, 3]);
 /// hgen.reseed(10);
 /// let result = hgen.pop();
-/// 
+///
 /// assert_eq!(result[0], 0.8125);
 /// ```
 pub struct Halton {
@@ -97,7 +97,7 @@ impl Halton {
     }
 }
 
-/// Circle sequence generator 
+/// Circle sequence generator
 ///
 /// # Examples
 ///
@@ -107,7 +107,7 @@ impl Halton {
 /// let mut cgen = Circle::new(2);
 /// cgen.reseed(1);
 /// let result = cgen.pop();
-/// 
+///
 /// assert_eq!(result[0], 1.0);
 /// ```
 pub struct Circle {
@@ -133,7 +133,7 @@ impl Circle {
     }
 }
 
-/// Sphere sequence generator 
+/// Sphere sequence generator
 ///
 /// # Examples
 ///
@@ -143,7 +143,7 @@ impl Circle {
 /// let mut sgen = Sphere::new(&[2, 3]);
 /// sgen.reseed(1);
 /// let result = sgen.pop();
-/// 
+///
 /// assert_eq!(result[2], -0.5);
 /// ```
 pub struct Sphere {
@@ -188,7 +188,7 @@ impl Sphere {
 /// let mut sgen = Sphere3Hopf::new(&[2, 3, 5]);
 /// sgen.reseed(0);
 /// let result = sgen.pop();
-/// 
+///
 /// assert_eq!(result[2], 0.4472135954999573);
 /// ```
 pub struct Sphere3Hopf {
