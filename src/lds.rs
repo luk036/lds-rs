@@ -184,12 +184,13 @@ impl Sphere {
 ///
 /// ```
 /// use lds_rs::Sphere3Hopf;
+/// use approx_eq::assert_approx_eq;
 ///
 /// let mut sgen = Sphere3Hopf::new(&[2, 3, 5]);
 /// sgen.reseed(0);
 /// let result = sgen.pop();
 ///
-/// assert_eq!(result[2], 0.4472135954999573);
+/// assert_approx_eq!(result[2], 0.4472135954999573);
 /// ```
 pub struct Sphere3Hopf {
     vdc0: Vdcorput,
