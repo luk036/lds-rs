@@ -64,7 +64,7 @@ fn main() {
     assert_approx_eq!(res[0], 0.65625);
 
     let mut cgen = CylinN::new(5, &PRIME_TABLE);
-    // cgen.reseed(10);
+    cgen.reseed(0);
     for _i in 0..10 {
         println!("{:?}", cgen.pop_vec());
     }
@@ -72,7 +72,7 @@ fn main() {
     assert_approx_eq!(res[0], 0.032662755534715766);
 
     let mut cgen = CylindN::new(5, &PRIME_TABLE);
-    // cgen.reseed(10);
+    cgen.reseed(0);
     for _i in 0..10 {
         println!("{:?}", cgen.pop_vec());
     }
@@ -80,7 +80,7 @@ fn main() {
     assert_approx_eq!(res[0], 0.032662755534715766);
 
     let mut sgen = SphereN::new(4, &PRIME_TABLE);
-    // sgen.reseed(10);
+    sgen.reseed(0);
     for _i in 0..10 {
         println!("{:?}", sgen.pop_vec());
     }
@@ -88,7 +88,7 @@ fn main() {
     assert_approx_eq!(res[0], 0.006903401092767657);
 
     let mut sgen = NSphere::new(4, &PRIME_TABLE);
-    // sgen.reseed(10);
+    sgen.reseed(0);
     for _i in 0..10 {
         println!("{:?}", sgen.pop_vec());
     }
