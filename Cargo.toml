@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-approx_eq = { version = "0.1.8" }
-ndarray = { version = "0.15.4" }
-lazy_static = { version = "1.4.0" }
-interp = { version = "0.1.1" }
+approx_eq = "0.1.8"
+ndarray = "0.15.4"
+lazy_static = "1.4.0"
+interp = "0.1.1"
