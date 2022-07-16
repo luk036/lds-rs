@@ -1,8 +1,8 @@
+use approx_eq::assert_approx_eq;
 use lds_rs::lds::PRIME_TABLE;
 use lds_rs::lds::{Circle, Halton, Sphere, Sphere3Hopf, Vdcorput};
 use lds_rs::lds_n::{CylinN, CylindN, HaltonN, NSphere, Sphere3, SphereN};
 use lds_rs::lds_n::{Cylind, SphereGen}; // Traits
-use approx_eq::assert_approx_eq;
 
 fn main() {
     let base: [usize; 5] = [2, 3, 5, 7, 11];
