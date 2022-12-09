@@ -3,15 +3,15 @@
 const TWO_PI: f64 = std::f64::consts::TAU;
 
 fn vdc(mut k: usize, base: usize) -> f64 {
-    let mut vdc = 0.0;
+    let mut res = 0.0;
     let mut denom = 1.0;
     while k != 0 {
-        denom *= base as f64;
         let remainder = k % base;
+        denom *= base as f64;
         k /= base;
-        vdc += (remainder as f64) / denom;
+        res += (remainder as f64) / denom;
     }
-    vdc
+    res
 }
 
 /// Van der Corput sequence generator
