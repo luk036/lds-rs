@@ -2,4 +2,4 @@
 
 # lds-rs
 
-Low Discrepancy Sequence Rust Code
+Low Discrepancy Sequence in Rust
