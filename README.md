@@ -1,4 +1,4 @@
-[![codecov](https://codecov.io/gh/luk036/lds-rs/branch/main/graph/badge.svg?token=wu6Alzj2TF)](https://codecov.io/gh/luk036/lds-rs)
+[![codecov](https://codecov.io/gh/luk036/lds-rs/branch/master/graph/badge.svg?token=wu6Alzj2TF)](https://codecov.io/gh/luk036/lds-rs)
 
 # lds-rs
 
