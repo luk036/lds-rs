@@ -33,7 +33,7 @@ pub struct Vdcorput {
 }
 
 impl Vdcorput {
-    pub fn new(base: usize) -> Self {
+    pub const fn new(base: usize) -> Self {
         Vdcorput { count: 0, base }
     }
 
