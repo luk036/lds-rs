@@ -2,14 +2,15 @@
 
 const TWO_PI: f64 = std::f64::consts::TAU;
 
-fn vdc(mut k: usize, base: usize) -> f64 {
+fn vdc(k: usize, base: usize) -> f64 {
     let mut res = 0.0;
     let mut denom = 1.0;
+    let mut k = k;
     while k != 0 {
         let remainder = k % base;
         denom *= base as f64;
         k /= base;
-        res += (remainder as f64) / denom;
+        res += remainder as f64 / denom;
     }
     res
 }
@@ -75,7 +76,7 @@ pub struct Halton {
 
 impl Halton {
     pub fn new(base: &[usize]) -> Self {
-        Halton {
+        Self {
             vdc0: Vdcorput::new(base[0]),
             vdc1: Vdcorput::new(base[1]),
         }
@@ -294,3 +295,16 @@ pub const PRIME_TABLE: [usize; 1000] = [
     7691, 7699, 7703, 7717, 7723, 7727, 7741, 7753, 7757, 7759, 7789, 7793, 7817, 7823, 7829, 7841,
     7853, 7867, 7873, 7877, 7879, 7883, 7901, 7907, 7919,
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_vdc() {
+        assert_eq!(vdc(1, 2), 0.5);
+        assert_eq!(vdc(2, 2), 0.25);
+        assert_eq!(vdc(3, 2), 0.75);
+        assert_eq!(vdc(4, 2), 0.125);
+        assert_eq!(vdc(5, 2), 0.625);
+    }
+}

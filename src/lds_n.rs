@@ -32,24 +32,19 @@ impl HaltonN {
      * @param base
      */
     pub fn new(n: usize, base: &[usize]) -> Self {
-        let mut vdcs = vec![];
-        for b in base.iter().take(n) {
-            vdcs.push(Vdcorput::new(*b));
+        HaltonN {
+            vdcs: (0..n).map(|i| Vdcorput::new(base[i])).collect(),
         }
-        HaltonN { vdcs }
     }
 
     pub fn pop_vec(&mut self) -> Vec<f64> {
-        let mut res = vec![];
-        for vdc in self.vdcs.iter_mut() {
-            res.push(vdc.pop());
-        }
-        res
+        self.vdcs.iter_mut().map(|vdc| vdc.pop()).collect()
     }
 
     pub fn reseed(&mut self, seed: usize) {
-        for vdc in self.vdcs.iter_mut() {
+        for vdc in &mut self.vdcs {
             vdc.reseed(seed);
         }
     }
 }
+
