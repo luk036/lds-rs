@@ -3,7 +3,7 @@ pub mod lds;
 pub mod lds_n;
 
 pub use crate::lds::PRIME_TABLE;
-pub use crate::lds::{Circle, Halton, Sphere, Sphere3Hopf, Vdcorput};
+pub use crate::lds::{Circle, Halton, Sphere, Sphere3Hopf, VdCorput};
 pub use crate::lds_n::HaltonN;
 
 #[cfg(test)]
@@ -16,7 +16,7 @@ mod tests {
     fn it_works() {
         let base: [usize; 5] = [2, 3, 5, 7, 11];
 
-        let mut vgen = Vdcorput::new(2);
+        let mut vgen = VdCorput::new(2);
         vgen.reseed(10);
         for _i in 0..10 {
             println!("{}", vgen.pop());

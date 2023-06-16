@@ -29,22 +29,22 @@ pub fn vdc(k: usize, base: usize) -> f64 {
 /// # Examples
 ///
 /// ```
-/// use lds_rs::Vdcorput;
+/// use lds_rs::VdCorput;
 ///
-/// let mut vgen = Vdcorput::new(2);
+/// let mut vgen = VdCorput::new(2);
 /// vgen.reseed(10);
 /// let result = vgen.pop();
 ///
 /// assert_eq!(result, 0.8125);
 /// ```
-pub struct Vdcorput {
+pub struct VdCorput {
     count: usize,
     base: usize,
 }
 
-impl Vdcorput {
+impl VdCorput {
     pub const fn new(base: usize) -> Self {
-        Vdcorput { count: 0, base }
+        VdCorput { count: 0, base }
     }
 
     pub fn pop(&mut self) -> f64 {
@@ -70,15 +70,15 @@ impl Vdcorput {
 /// assert_eq!(result[0], 0.8125);
 /// ```
 pub struct Halton {
-    vdc0: Vdcorput,
-    vdc1: Vdcorput,
+    vdc0: VdCorput,
+    vdc1: VdCorput,
 }
 
 impl Halton {
     pub fn new(base: &[usize]) -> Self {
         Self {
-            vdc0: Vdcorput::new(base[0]),
-            vdc1: Vdcorput::new(base[1]),
+            vdc0: VdCorput::new(base[0]),
+            vdc1: VdCorput::new(base[1]),
         }
     }
 
@@ -111,13 +111,13 @@ impl Halton {
 /// assert_eq!(result[0], 1.0);
 /// ```
 pub struct Circle {
-    vdc: Vdcorput,
+    vdc: VdCorput,
 }
 
 impl Circle {
     pub fn new(base: usize) -> Self {
         Circle {
-            vdc: Vdcorput::new(base),
+            vdc: VdCorput::new(base),
         }
     }
 
@@ -146,14 +146,14 @@ impl Circle {
 /// assert_eq!(result[2], -0.5);
 /// ```
 pub struct Sphere {
-    vdc: Vdcorput,
+    vdc: VdCorput,
     cirgen: Circle,
 }
 
 impl Sphere {
     pub fn new(base: &[usize]) -> Self {
         Sphere {
-            vdc: Vdcorput::new(base[0]),
+            vdc: VdCorput::new(base[0]),
             cirgen: Circle::new(base[1]),
         }
     }
@@ -191,17 +191,17 @@ impl Sphere {
 /// assert_approx_eq!(result[2], 0.4472135954999573);
 /// ```
 pub struct Sphere3Hopf {
-    vdc0: Vdcorput,
-    vdc1: Vdcorput,
-    vdc2: Vdcorput,
+    vdc0: VdCorput,
+    vdc1: VdCorput,
+    vdc2: VdCorput,
 }
 
 impl Sphere3Hopf {
     pub fn new(base: &[usize]) -> Self {
         Sphere3Hopf {
-            vdc0: Vdcorput::new(base[0]),
-            vdc1: Vdcorput::new(base[1]),
-            vdc2: Vdcorput::new(base[2]),
+            vdc0: VdCorput::new(base[0]),
+            vdc1: VdCorput::new(base[1]),
+            vdc2: VdCorput::new(base[2]),
         }
     }
 

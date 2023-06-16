@@ -18,23 +18,23 @@ const fn vdc_i(mut k: usize, base: usize, scale: u32) -> usize {
 /// # Examples
 ///
 /// ```
-/// use lds_rs::Vdcorput;
+/// use lds_rs::VdCorput;
 ///
-/// let mut vgen = Vdcorput::new(2);
+/// let mut vgen = VdCorput::new(2);
 /// vgen.reseed(10);
 /// let result = vgen.pop();
 ///
 /// assert_eq!(result, 0.8125);
 /// ```
-pub struct Vdcorput {
+pub struct VdCorput {
     count: usize,
     base: usize,
     scale: u32,
 }
 
-impl Vdcorput {
+impl VdCorput {
     pub const fn new(base: usize, scale: u32) -> Self {
-        Vdcorput {
+        VdCorput {
             count: 0,
             base,
             scale,
@@ -51,7 +51,7 @@ impl Vdcorput {
     }
 }
 
-// impl FnOnce<()> for Vdcorput {
+// impl FnOnce<()> for VdCorput {
 //     type Output = f64;
 //     extern "rust-call" fn call_once(self, _arg: ()) -> Self::Output {
 //         self.count += 1;
@@ -73,15 +73,15 @@ impl Vdcorput {
 /// assert_eq!(result[0], 1024);
 /// ```
 pub struct Halton {
-    vdc0: Vdcorput,
-    vdc1: Vdcorput,
+    vdc0: VdCorput,
+    vdc1: VdCorput,
 }
 
 impl Halton {
     pub fn new(base: &[usize], scale: &[u32]) -> Self {
         Halton {
-            vdc0: Vdcorput::new(base[0], scale[0]),
-            vdc1: Vdcorput::new(base[1], scale[1]),
+            vdc0: VdCorput::new(base[0], scale[0]),
+            vdc1: VdCorput::new(base[1], scale[1]),
         }
     }
 

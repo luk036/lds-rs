@@ -1,11 +1,11 @@
-use crate::lds::Vdcorput;
+use crate::lds::VdCorput;
 
 /**
  * @brief Halton(n) sequence generator
  *
  */
 pub struct HaltonN {
-    vdcs: Vec<Vdcorput>,
+    vdcs: Vec<VdCorput>,
 }
 
 /// Halton(n) sequence generator
@@ -33,7 +33,7 @@ impl HaltonN {
      */
     pub fn new(n: usize, base: &[usize]) -> Self {
         HaltonN {
-            vdcs: (0..n).map(|i| Vdcorput::new(base[i])).collect(),
+            vdcs: (0..n).map(|i| VdCorput::new(base[i])).collect(),
         }
     }
 
