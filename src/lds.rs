@@ -2,7 +2,16 @@
 
 const TWO_PI: f64 = std::f64::consts::TAU;
 
-fn vdc(k: usize, base: usize) -> f64 {
+/// Van der Corput sequence
+///
+/// # Examples
+///
+/// ```
+/// use lds_rs::lds::vdc;
+///
+/// assert_eq!(vdc(11, 2), 0.8125);
+/// ```
+pub fn vdc(k: usize, base: usize) -> f64 {
     let mut res = 0.0;
     let mut denom = 1.0;
     let mut k = k;
@@ -48,14 +57,6 @@ impl Vdcorput {
     }
 }
 
-// impl FnOnce<()> for Vdcorput {
-//     type Output = f64;
-//     extern "rust-call" fn call_once(self, _arg: ()) -> Self::Output {
-//         self.count += 1;
-//         vdc(self.count, self.base)
-//     }
-// }
-
 /// Halton sequence generator
 ///
 /// # Examples
@@ -66,7 +67,6 @@ impl Vdcorput {
 /// let mut hgen = Halton::new(&[2, 3]);
 /// hgen.reseed(10);
 /// let result = hgen.pop();
-///
 /// assert_eq!(result[0], 0.8125);
 /// ```
 pub struct Halton {
@@ -108,7 +108,6 @@ impl Halton {
 /// let mut cgen = Circle::new(2);
 /// cgen.reseed(1);
 /// let result = cgen.pop();
-///
 /// assert_eq!(result[0], 1.0);
 /// ```
 pub struct Circle {
@@ -144,7 +143,6 @@ impl Circle {
 /// let mut sgen = Sphere::new(&[2, 3]);
 /// sgen.reseed(1);
 /// let result = sgen.pop();
-///
 /// assert_eq!(result[2], -0.5);
 /// ```
 pub struct Sphere {
@@ -190,7 +188,6 @@ impl Sphere {
 /// let mut sgen = Sphere3Hopf::new(&[2, 3, 5]);
 /// sgen.reseed(0);
 /// let result = sgen.pop();
-///
 /// assert_approx_eq!(result[2], 0.4472135954999573);
 /// ```
 pub struct Sphere3Hopf {
