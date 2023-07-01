@@ -43,10 +43,12 @@ pub struct VdCorput {
 }
 
 impl VdCorput {
+    /// Creates a new [`VdCorput`].
     pub const fn new(base: usize) -> Self {
         VdCorput { count: 0, base }
     }
 
+    /// Returns the pop of this [`VdCorput`].
     pub fn pop(&mut self) -> f64 {
         self.count += 1;
         vdc(self.count, self.base)
@@ -75,6 +77,7 @@ pub struct Halton {
 }
 
 impl Halton {
+    /// Creates a new [`Halton`].
     pub fn new(base: &[usize]) -> Self {
         Self {
             vdc0: VdCorput::new(base[0]),
@@ -82,15 +85,11 @@ impl Halton {
         }
     }
 
+    /// Returns the pop of this [`Halton`].
     pub fn pop(&mut self) -> [f64; 2] {
         [self.vdc0.pop(), self.vdc1.pop()]
     }
 
-    /**
-     * @brief
-     *
-     * @param seed
-     */
     #[allow(dead_code)]
     pub fn reseed(&mut self, seed: usize) {
         self.vdc0.reseed(seed);
@@ -115,12 +114,14 @@ pub struct Circle {
 }
 
 impl Circle {
+    /// Creates a new [`Circle`].
     pub fn new(base: usize) -> Self {
         Circle {
             vdc: VdCorput::new(base),
         }
     }
 
+    /// Returns the pop of this [`Circle`].
     pub fn pop(&mut self) -> [f64; 2] {
         // let two_pi = 2.0 * (-1.0 as f64).acos(); // ???
         let theta = self.vdc.pop() * TWO_PI; // map to [0, 2*pi];
@@ -151,6 +152,7 @@ pub struct Sphere {
 }
 
 impl Sphere {
+    /// Creates a new [`Sphere`].
     pub fn new(base: &[usize]) -> Self {
         Sphere {
             vdc: VdCorput::new(base[0]),
@@ -158,6 +160,7 @@ impl Sphere {
         }
     }
 
+    /// Returns the pop of this [`Sphere`].
     pub fn pop(&mut self) -> [f64; 3] {
         let cosphi = 2.0 * self.vdc.pop() - 1.0; // map to [-1, 1];
         let sinphi = (1.0 - cosphi * cosphi).sqrt();
@@ -165,11 +168,6 @@ impl Sphere {
         [sinphi * c, sinphi * s, cosphi]
     }
 
-    /**
-     * @brief
-     *
-     * @param seed
-     */
     #[allow(dead_code)]
     pub fn reseed(&mut self, seed: usize) {
         self.cirgen.reseed(seed);
@@ -197,6 +195,7 @@ pub struct Sphere3Hopf {
 }
 
 impl Sphere3Hopf {
+    /// Creates a new [`Sphere3Hopf`].
     pub fn new(base: &[usize]) -> Self {
         Sphere3Hopf {
             vdc0: VdCorput::new(base[0]),
@@ -205,6 +204,7 @@ impl Sphere3Hopf {
         }
     }
 
+    /// Returns the pop of this [`Sphere3Hopf`].
     pub fn pop(&mut self) -> [f64; 4] {
         let phi = self.vdc0.pop() * TWO_PI; // map to [0, 2*pi];
         let psy = self.vdc1.pop() * TWO_PI; // map to [0, 2*pi];

@@ -25,18 +25,14 @@ pub struct HaltonN {
 ///
 /// assert_approx_eq!(res[0], 0.65625);
 impl HaltonN {
-    /**
-     * @brief Construct a new halton n object
-     *
-     * @param n
-     * @param base
-     */
+    /// Creates a new [`HaltonN`].
     pub fn new(n: usize, base: &[usize]) -> Self {
         HaltonN {
             vdcs: (0..n).map(|i| VdCorput::new(base[i])).collect(),
         }
     }
 
+    /// Returns the pop vec of this [`HaltonN`].
     pub fn pop_vec(&mut self) -> Vec<f64> {
         self.vdcs.iter_mut().map(|vdc| vdc.pop()).collect()
     }

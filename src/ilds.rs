@@ -1,6 +1,5 @@
 // #![feature(unboxed_closures)]
 
-// const function
 const fn vdc_i(mut k: usize, base: usize, scale: u32) -> usize {
     let mut res = 0;
     let mut factor = base.pow(scale);
@@ -33,6 +32,7 @@ pub struct VdCorput {
 }
 
 impl VdCorput {
+    /// Creates a new [`VdCorput`].
     pub const fn new(base: usize, scale: u32) -> Self {
         VdCorput {
             count: 0,
@@ -41,6 +41,16 @@ impl VdCorput {
         }
     }
 
+    /// Returns the pop of this [`VdCorput`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use lds_rs::ilds::VdCorput;
+    ///
+    /// let mut vd_corput = VdCorput::new(2, 10);
+    /// assert_eq!(vd_corput.pop(), 512);
+    /// ```
     pub fn pop(&mut self) -> usize {
         self.count += 1;
         vdc_i(self.count, self.base, self.scale)
@@ -78,6 +88,7 @@ pub struct Halton {
 }
 
 impl Halton {
+    /// Creates a new [`Halton`].
     pub fn new(base: &[usize], scale: &[u32]) -> Self {
         Halton {
             vdc0: VdCorput::new(base[0], scale[0]),
@@ -85,15 +96,11 @@ impl Halton {
         }
     }
 
+    /// Returns the pop of this [`Halton`].
     pub fn pop(&mut self) -> [usize; 2] {
         [self.vdc0.pop(), self.vdc1.pop()]
     }
 
-    /**
-     * @brief
-     *
-     * @param seed
-     */
     #[allow(dead_code)]
     pub fn reseed(&mut self, seed: usize) {
         self.vdc0.reseed(seed);
