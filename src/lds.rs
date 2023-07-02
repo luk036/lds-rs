@@ -35,6 +35,7 @@ pub fn vdc(k: usize, base: usize) -> f64 {
 /// and calculating the fractional part of the number in that base. The
 /// [`VdCorput`] class keeps track of the current count and base, and provides a
 /// `pop()` method that returns the next value in the sequence.
+///
 /// # Examples
 ///
 /// ```
@@ -72,7 +73,7 @@ impl VdCorput {
         vdc(self.count, self.base)
     }
 
-    /// reseed
+    /// Reseed
     ///
     /// The `reseed(...)` function is used to reset the state of the
     /// sequence generator to a specific seed value. This allows the sequence
@@ -92,13 +93,13 @@ impl VdCorput {
 /// fractional parts of the numbers in those bases. The `Halton` class keeps
 /// track of the current count and bases, and provides a `pop()` method that
 /// returns the next point in the sequence as a `[f64; 2]`.
-/// 
+///
 /// # Examples
 ///
 /// ```
 /// use lds_rs::Halton;
 ///
-/// let mut hgen = Halton::new(&[2, 3]);
+/// let mut hgen = Halton::new(2, 3);
 /// hgen.reseed(10);
 /// let result = hgen.pop();
 /// assert_eq!(result[0], 0.8125);
@@ -110,33 +111,38 @@ pub struct Halton {
 
 impl Halton {
     /// Creates a new [`Halton`].
-    /// 
+    ///
     /// The `new(base0: usize, base1: usize)` is a function for creating a new
     /// the [`Halton`] class. It takes two parameters `base0` and `base1`, which are
     /// used as the bases for generating the Halton sequence.
-    pub fn new(base: &[usize]) -> Self {
+    pub fn new(base0: usize, base1: usize) -> Self {
         Self {
-            vdc0: VdCorput::new(base[0]),
-            vdc1: VdCorput::new(base[1]),
+            vdc0: VdCorput::new(base0),
+            vdc1: VdCorput::new(base1),
         }
     }
 
     /// Returns the pop of this [`Halton`].
-    /// 
+    ///
     /// The `pop()` function is used to generate the next value in the sequence.
     /// For example, in the [`VdCorput`] class, `pop()` increments the count and
     /// calculates the Van der Corput sequence value for that count and base. In
     /// the [`Halton`] class, `pop()` returns the next point in the Halton sequence
-    /// as a `std::array<double, 2>`. Similarly, in the `Circle` class, `pop()`
-    /// returns the next point on the unit circle as a `std::array<double, 2>`. In
-    /// the `Sphere` class, `pop()` returns the next point on the unit sphere as a
-    /// `std::array<double, 3>`. And in the `Sphere3Hopf` class, `pop()` returns
-    /// the next point on the 3-sphere using the Hopf fibration as a
-    /// `std::array<double, 4>`.
+    /// as a `[f64; 2]`. Similarly, in the [`Circle`] class, `pop()`
+    /// returns the next point on the unit circle as a `[f64; 2]`. In
+    /// the [`Sphere`] class, `pop()` returns the next point on the unit sphere as a
+    /// `[f64; 3]`. And in the [`Sphere3Hopf`] class, `pop()` returns
+    /// the next point on the 3-sphere using the Hopf fibration as a `[f64; 4]`.
     pub fn pop(&mut self) -> [f64; 2] {
         [self.vdc0.pop(), self.vdc1.pop()]
     }
 
+    /// Reseed
+    ///
+    /// The `reseed(...)` function is used to reset the state of the
+    /// sequence generator to a specific seed value. This allows the sequence
+    /// generator to start generating the sequence from the beginning, or from a
+    /// specific point in the sequence, depending on the value of the seed.
     #[allow(dead_code)]
     pub fn reseed(&mut self, seed: usize) {
         self.vdc0.reseed(seed);
@@ -145,6 +151,15 @@ impl Halton {
 }
 
 /// Circle sequence generator
+///
+/// The [`Circle`] class is a sequence generator that generates points on a unit
+/// circle using the Van der Corput sequence. It uses the [`VdCorput`] class to
+/// generate the sequence values and maps them to points on the unit circle. The
+/// `pop()` method returns the next point on the unit circle as a
+/// `[f64; 2]`, where the first element represents the x-coordinate
+/// and the second element represents the y-coordinate of the point. The
+/// `reseed()` method is used to reset the state of the sequence generator to a
+/// specific seed value.
 ///
 /// # Examples
 ///
@@ -162,6 +177,10 @@ pub struct Circle {
 
 impl Circle {
     /// Creates a new [`Circle`].
+    ///
+    /// The `new(base: usize)` creates a new [`Circle`] object
+    /// with a given base. The base is used to generate the Van der Corput
+    /// sequence, which is then mapped to points on the unit circle.
     pub fn new(base: usize) -> Self {
         Circle {
             vdc: VdCorput::new(base),
@@ -169,12 +188,28 @@ impl Circle {
     }
 
     /// Returns the pop of this [`Circle`].
+    ///
+    /// The `pop()` function is used to generate the next value in the sequence.
+    /// For example, in the [`VdCorput`] class, `pop()` increments the count and
+    /// calculates the Van der Corput sequence value for that count and base. In
+    /// the [`Halton`] class, `pop()` returns the next point in the Halton sequence
+    /// as a `[f64; 2]`. Similarly, in the [`Circle`] class, `pop()`
+    /// returns the next point on the unit circle as a `[f64; 2]`. In
+    /// the [`Sphere`] class, `pop()` returns the next point on the unit sphere as a
+    /// `[f64; 3]`. And in the [`Sphere3Hopf`] class, `pop()` returns
+    /// the next point on the 3-sphere using the Hopf fibration as a `[f64; 4]`.
     pub fn pop(&mut self) -> [f64; 2] {
-        // let two_pi = 2.0 * (-1.0 as f64).acos(); // ???
+        // let two_pi = 2.0/// (-1.0 as f64).acos(); // ???
         let theta = self.vdc.pop() * TWO_PI; // map to [0, 2*pi];
         [theta.sin(), theta.cos()]
     }
 
+    /// Reseed
+    ///
+    /// The `reseed(...)` function is used to reset the state of the
+    /// sequence generator to a specific seed value. This allows the sequence
+    /// generator to start generating the sequence from the beginning, or from a
+    /// specific point in the sequence, depending on the value of the seed.
     #[allow(dead_code)]
     pub fn reseed(&mut self, seed: usize) {
         self.vdc.reseed(seed);
@@ -182,6 +217,16 @@ impl Circle {
 }
 
 /// Sphere sequence generator
+///
+/// The `Sphere` class is a sequence generator that generates points on a unit
+/// sphere using the Van der Corput sequence. It uses the `VdCorput` class to
+/// generate the sequence values and maps them to points on the unit sphere. The
+/// `pop()` method returns the next point on the unit sphere as a
+/// `[f64; 3]`, where the first element represents the x-coordinate,
+/// the second element represents the y-coordinate of the point, and the third
+/// element represents the z-coordinate of the point. The
+/// `reseed()` method is used to reset the state of the sequence generator to a
+/// specific seed value.
 ///
 /// # Examples
 ///
@@ -208,6 +253,16 @@ impl Sphere {
     }
 
     /// Returns the pop of this [`Sphere`].
+    ///
+    /// The `pop()` function is used to generate the next value in the sequence.
+    /// For example, in the [`VdCorput`] class, `pop()` increments the count and
+    /// calculates the Van der Corput sequence value for that count and base. In
+    /// the [`Halton`] class, `pop()` returns the next point in the Halton sequence
+    /// as a `[f64; 2]`. Similarly, in the [`Circle`] class, `pop()`
+    /// returns the next point on the unit circle as a `[f64; 2]`. In
+    /// the [`Sphere`] class, `pop()` returns the next point on the unit sphere as a
+    /// `[f64; 3]`. And in the [`Sphere3Hopf`] class, `pop()` returns
+    /// the next point on the 3-sphere using the Hopf fibration as a `[f64; 4]`.
     pub fn pop(&mut self) -> [f64; 3] {
         let cosphi = 2.0 * self.vdc.pop() - 1.0; // map to [-1, 1];
         let sinphi = (1.0 - cosphi * cosphi).sqrt();
@@ -215,6 +270,12 @@ impl Sphere {
         [sinphi * c, sinphi * s, cosphi]
     }
 
+    /// Reseed
+    ///
+    /// The `reseed(...)` function is used to reset the state of the
+    /// sequence generator to a specific seed value. This allows the sequence
+    /// generator to start generating the sequence from the beginning, or from a
+    /// specific point in the sequence, depending on the value of the seed.
     #[allow(dead_code)]
     pub fn reseed(&mut self, seed: usize) {
         self.cirgen.reseed(seed);
@@ -223,6 +284,15 @@ impl Sphere {
 }
 
 /// S(3) sequence generator by Hopf coordinates
+///
+/// The `Sphere3Hopf` class is a sequence generator that generates points on a
+/// 3-sphere using the Hopf fibration. It uses three instances of the `VdCorput`
+/// class to generate the sequence values and maps them to points on the
+/// 3-sphere. The `pop()` method returns the next point on the 3-sphere as a
+/// `[f64; 4]`, where the first three elements represent the x, y,
+/// and z coordinates of the point, and the fourth element represents the w
+/// coordinate. The `reseed()` method is used to reset the state of the sequence
+/// generator to a specific seed value.
 ///
 /// # Examples
 ///
@@ -252,6 +322,16 @@ impl Sphere3Hopf {
     }
 
     /// Returns the pop of this [`Sphere3Hopf`].
+    ///
+    /// The `pop()` function is used to generate the next value in the sequence.
+    /// For example, in the [`VdCorput`] class, `pop()` increments the count and
+    /// calculates the Van der Corput sequence value for that count and base. In
+    /// the [`Halton`] class, `pop()` returns the next point in the Halton sequence
+    /// as a `[f64; 2]`. Similarly, in the [`Circle`] class, `pop()`
+    /// returns the next point on the unit circle as a `[f64; 2]`. In
+    /// the [`Sphere`] class, `pop()` returns the next point on the unit sphere as a
+    /// `[f64; 3]`. And in the [`Sphere3Hopf`] class, `pop()` returns
+    /// the next point on the 3-sphere using the Hopf fibration as a `[f64; 4]`.
     pub fn pop(&mut self) -> [f64; 4] {
         let phi = self.vdc0.pop() * TWO_PI; // map to [0, 2*pi];
         let psy = self.vdc1.pop() * TWO_PI; // map to [0, 2*pi];
@@ -266,6 +346,12 @@ impl Sphere3Hopf {
         ]
     }
 
+    /// Reseed
+    ///
+    /// The `reseed(...)` function is used to reset the state of the
+    /// sequence generator to a specific seed value. This allows the sequence
+    /// generator to start generating the sequence from the beginning, or from a
+    /// specific point in the sequence, depending on the value of the seed.
     #[allow(dead_code)]
     pub fn reseed(&mut self, seed: usize) {
         self.vdc0.reseed(seed);

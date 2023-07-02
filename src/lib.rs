@@ -32,7 +32,7 @@ mod tests {
         let res = cgen.pop();
         assert_approx_eq!(res[0], -0.8314696123025452);
 
-        let mut hgen = Halton::new(&base);
+        let mut hgen = Halton::new(2, 3);
         hgen.reseed(10);
         for _i in 0..10 {
             println!("{:?}", hgen.pop());
