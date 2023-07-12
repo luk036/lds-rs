@@ -107,7 +107,7 @@ impl VdCorput {
 /// ```
 /// use lds_rs::Halton;
 ///
-/// let mut hgen = Halton::new(&[2, 3]);
+/// let mut hgen = Halton::new(2, 3);
 /// hgen.reseed(10);
 /// let result = hgen.pop();
 /// assert_eq!(result[0], 0.8125);
@@ -132,8 +132,8 @@ impl Halton {
     /// The `new` function returns an instance of the `Halton` struct.
     pub fn new(base: &[usize]) -> Self {
         Self {
-            vdc0: VdCorput::new(base[0]),
-            vdc1: VdCorput::new(base[1]),
+            vdc0: VdCorput::new(base0),
+            vdc1: VdCorput::new(base1),
         }
     }
 
@@ -219,7 +219,7 @@ impl Circle {
     /// The `pop` function returns an array of two `f64` values, representing the sine and cosine of a
     /// randomly generated angle.
     pub fn pop(&mut self) -> [f64; 2] {
-        // let two_pi = 2.0 * (-1.0 as f64).acos(); // ???
+        // let two_pi = 2.0/// (-1.0 as f64).acos(); // ???
         let theta = self.vdc.pop() * TWO_PI; // map to [0, 2*pi];
         [theta.sin(), theta.cos()]
     }
@@ -322,6 +322,15 @@ impl Sphere {
 /// Van der Corput sequence. This sequence is a low-discrepancy sequence that is commonly used in
 /// numerical methods for generating random numbers. In the context of the `
 ///
+/// The `Sphere3Hopf` class is a sequence generator that generates points on a
+/// 3-sphere using the Hopf fibration. It uses three instances of the `VdCorput`
+/// class to generate the sequence values and maps them to points on the
+/// 3-sphere. The `pop()` method returns the next point on the 3-sphere as a
+/// `[f64; 4]`, where the first three elements represent the x, y,
+/// and z coordinates of the point, and the fourth element represents the w
+/// coordinate. The `reseed()` method is used to reset the state of the sequence
+/// generator to a specific seed value.
+///
 /// # Examples
 ///
 /// ```
@@ -369,6 +378,16 @@ impl Sphere3Hopf {
     /// 
     /// The function `pop` returns an array of four `f64` values.
     /// Returns the pop of this [`Sphere3Hopf`].
+    ///
+    /// The `pop()` function is used to generate the next value in the sequence.
+    /// For example, in the [`VdCorput`] class, `pop()` increments the count and
+    /// calculates the Van der Corput sequence value for that count and base. In
+    /// the [`Halton`] class, `pop()` returns the next point in the Halton sequence
+    /// as a `[f64; 2]`. Similarly, in the [`Circle`] class, `pop()`
+    /// returns the next point on the unit circle as a `[f64; 2]`. In
+    /// the [`Sphere`] class, `pop()` returns the next point on the unit sphere as a
+    /// `[f64; 3]`. And in the [`Sphere3Hopf`] class, `pop()` returns
+    /// the next point on the 3-sphere using the Hopf fibration as a `[f64; 4]`.
     pub fn pop(&mut self) -> [f64; 4] {
         let phi = self.vdc0.pop() * TWO_PI; // map to [0, 2*pi];
         let psy = self.vdc1.pop() * TWO_PI; // map to [0, 2*pi];
