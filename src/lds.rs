@@ -48,9 +48,10 @@ pub fn vdc(k: usize, base: usize) -> f64 {
 ///
 /// assert_eq!(result, 0.8125);
 /// ```
+#[derive(PartialEq, Eq, Debug)]
 pub struct VdCorput {
-    count: usize,
-    base: usize,
+    pub count: usize,
+    pub base: usize,
 }
 
 impl VdCorput {
@@ -130,6 +131,7 @@ impl VdCorput {
 /// let result = hgen.pop();
 /// assert_eq!(result[0], 0.8125);
 /// ```
+#[derive(PartialEq, Eq, Debug)]
 pub struct Halton {
     vdc0: VdCorput,
     vdc1: VdCorput,
@@ -213,6 +215,7 @@ impl Halton {
 /// let result = cgen.pop();
 /// assert_eq!(result[0], 1.0);
 /// ```
+#[derive(PartialEq, Eq, Debug)]
 pub struct Circle {
     vdc: VdCorput,
 }
@@ -295,6 +298,7 @@ impl Circle {
 /// let result = sgen.pop();
 /// assert_eq!(result[2], -0.5);
 /// ```
+#[derive(PartialEq, Eq, Debug)]
 pub struct Sphere {
     vdc: VdCorput,
     cirgen: Circle,
@@ -394,6 +398,7 @@ impl Sphere {
 /// let result = sgen.pop();
 /// assert_approx_eq!(result[2], 0.4472135954999573);
 /// ```
+#[derive(PartialEq, Eq, Debug)]
 pub struct Sphere3Hopf {
     vdc0: VdCorput,
     vdc1: VdCorput,
