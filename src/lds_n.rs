@@ -1,9 +1,9 @@
 use crate::lds::VdCorput;
 
 /// The HaltonN struct is a generator for the Halton(n) sequence.
-/// 
+///
 /// Properties:
-/// 
+///
 /// * `vdcs`: A vector of VdCorput objects.
 pub struct HaltonN {
     vdcs: Vec<VdCorput>,
@@ -35,20 +35,20 @@ pub struct HaltonN {
 /// assert_approx_eq!(res[0], 0.65625);
 impl HaltonN {
     /// Creates a new [`HaltonN`].
-    /// 
+    ///
     /// The `new` function creates a new `HaltonN` struct with a specified number of `VdCorput`
     /// instances.
-    /// 
+    ///
     /// Arguments:
-    /// 
+    ///
     /// * `n`: The `n` parameter represents the number of dimensions in the Halton sequence. It
     /// determines how many different Van der Corput sequences will be generated.
     /// * `base`: The `base` parameter is a slice of `usize` values. It represents the base values for
     /// each dimension of the Halton sequence. Each dimension of the Halton sequence uses a different
     /// base value to generate the sequence.
-    /// 
+    ///
     /// Returns:
-    /// 
+    ///
     /// The `new` function returns a new instance of the `HaltonN` struct.
     pub fn new(n: usize, base: &[usize]) -> Self {
         HaltonN {

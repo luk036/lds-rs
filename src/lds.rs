@@ -130,7 +130,7 @@ impl Halton {
     /// Returns:
     ///
     /// The `new` function returns an instance of the `Halton` struct.
-    pub fn new(base: &[usize]) -> Self {
+    pub fn new(base0: usize, base1: usize) -> Self {
         Self {
             vdc0: VdCorput::new(base0),
             vdc1: VdCorput::new(base1),
@@ -283,11 +283,11 @@ impl Sphere {
     }
 
     /// Returns the pop of this [`Sphere`].
-    /// 
+    ///
     /// The `pop` function returns a random point on a sphere using the VDC and cirgen generators.
-    /// 
+    ///
     /// Returns:
-    /// 
+    ///
     /// an array of three `f64` values, representing the coordinates of a point on a sphere. The first
     /// two values (`sinphi * c` and `sinphi * s`) represent the x and y coordinates, while the third
     /// value (`cosphi`) represents the z coordinate.
@@ -310,9 +310,9 @@ impl Sphere {
 }
 
 /// The `Sphere3Hopf` struct is a sequence generator for the S(3) sequence using Hopf coordinates.
-/// 
+///
 /// Properties:
-/// 
+///
 /// * `vdc0`: An instance of the VdCorput sequence generator used for the first coordinate of the Hopf
 /// coordinates.
 /// * `vdc1`: The `vdc1` property is an instance of the [`VdCorput`] struct, which is used to generate a
@@ -353,15 +353,15 @@ impl Sphere3Hopf {
     ///
     /// The `new` function creates a new instance of the [`Sphere3Hopf`] struct with three `VdCorput`
     /// instances initialized with the values from the `base` slice.
-    /// 
+    ///
     /// Arguments:
-    /// 
+    ///
     /// * `base`: The `base` parameter is an array of three `usize` values. These values are used to
     /// initialize three instances of the `VdCorput` struct, which is a type of quasi-random number
     /// generator. Each `VdCorput` instance is initialized with a different base value from the
-    /// 
+    ///
     /// Returns:
-    /// 
+    ///
     /// The `new` function is returning an instance of the `Sphere3Hopf` struct.
     pub fn new(base: &[usize]) -> Self {
         Sphere3Hopf {
@@ -373,9 +373,9 @@ impl Sphere3Hopf {
 
     /// The `pop` function returns a four-element array representing the coordinates of a point on a
     /// sphere in 3D space.
-    /// 
+    ///
     /// Returns:
-    /// 
+    ///
     /// The function `pop` returns an array of four `f64` values.
     /// Returns the pop of this [`Sphere3Hopf`].
     ///

@@ -15,7 +15,16 @@
 /// Returns:
 ///
 /// The function `vdc_i` returns an unsigned integer value of type `usize`.
-const fn vdc_i(mut k: usize, base: usize, scale: u32) -> usize {
+///
+/// # Examples
+///
+/// ```
+/// use lds_rs::ilds::vdc_i;
+///
+/// assert_eq!(vdc_i(10, 2, 2), 1);
+/// assert_eq!(vdc_i(10, 2, 3), 2);
+/// ```
+pub const fn vdc_i(mut k: usize, base: usize, scale: u32) -> usize {
     let mut res = 0;
     let mut factor = base.pow(scale);
     while k != 0 {
