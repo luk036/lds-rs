@@ -2,6 +2,12 @@
 name = "lds-rs"
 version = "0.1.0"
 edition = "2021"
+description = "Low Discrepancy Sequence Generation in Rust"
+repository = "https://github.com/luk036/lds-rs"
+license = "MIT OR Apache-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
 
 [dev-dependencies]
 approx_eq = "0.1.8"
