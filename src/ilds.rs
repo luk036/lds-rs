@@ -60,7 +60,7 @@ pub const fn vdc_i(mut k: usize, base: usize, scale: u32) -> usize {
 ///
 /// assert_eq!(result, 0.8125);
 /// ```
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug)]
 pub struct VdCorput {
     count: usize,
     base: usize,
@@ -149,7 +149,7 @@ impl VdCorput {
 ///
 /// assert_eq!(result[0], 1024);
 /// ```
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug)]
 pub struct Halton {
     vdc0: VdCorput,
     vdc1: VdCorput,

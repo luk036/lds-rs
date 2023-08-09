@@ -5,7 +5,7 @@ use crate::lds::VdCorput;
 /// Properties:
 ///
 /// * `vdcs`: A vector of VdCorput objects.
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug)]
 pub struct HaltonN {
     vdcs: Vec<VdCorput>,
 }

@@ -48,10 +48,10 @@ pub fn vdc(k: usize, base: usize) -> f64 {
 ///
 /// assert_eq!(result, 0.8125);
 /// ```
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug)]
 pub struct VdCorput {
-    pub count: usize,
-    pub base: usize,
+    count: usize,
+    base: usize,
 }
 
 impl VdCorput {
@@ -67,13 +67,6 @@ impl VdCorput {
     /// Returns:
     ///
     /// The `new` function returns a `VdCorput` object.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use lds_rs::lds::VdCorput;
-    ///
-    /// assert_eq!(VdCorput::new(2), VdCorput { count: 0, base: 2});
     /// ```
     pub const fn new(base: usize) -> Self {
         VdCorput { count: 0, base }
@@ -93,7 +86,6 @@ impl VdCorput {
     ///
     /// let mut vd_corput = VdCorput::new(2);
     /// assert_eq!(vd_corput.pop(), 0.5);
-    /// assert_eq!(vd_corput, VdCorput {count: 1, base: 2});
     /// ```
     pub fn pop(&mut self) -> f64 {
         self.count += 1;
@@ -131,7 +123,7 @@ impl VdCorput {
 /// let result = hgen.pop();
 /// assert_eq!(result[0], 0.8125);
 /// ```
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug)]
 pub struct Halton {
     vdc0: VdCorput,
     vdc1: VdCorput,
@@ -215,7 +207,7 @@ impl Halton {
 /// let result = cgen.pop();
 /// assert_eq!(result[0], 1.0);
 /// ```
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug)]
 pub struct Circle {
     vdc: VdCorput,
 }
@@ -298,7 +290,7 @@ impl Circle {
 /// let result = sgen.pop();
 /// assert_eq!(result[2], -0.5);
 /// ```
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug)]
 pub struct Sphere {
     vdc: VdCorput,
     cirgen: Circle,
@@ -398,7 +390,7 @@ impl Sphere {
 /// let result = sgen.pop();
 /// assert_approx_eq!(result[2], 0.4472135954999573);
 /// ```
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Debug)]
 pub struct Sphere3Hopf {
     vdc0: VdCorput,
     vdc1: VdCorput,
