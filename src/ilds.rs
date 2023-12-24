@@ -18,7 +18,7 @@
 ///
 /// # Examples
 ///
-/// ```
+/// ```rust
 /// use lds_rs::ilds::vdc_i;
 ///
 /// assert_eq!(vdc_i(10, 2, 2), 1);
@@ -51,7 +51,7 @@ pub const fn vdc_i(mut k: usize, base: usize, scale: u32) -> usize {
 ///
 /// # Examples
 ///
-/// ```
+/// ```rust
 /// use lds_rs::VdCorput;
 ///
 /// let mut vgen = VdCorput::new(2);
@@ -101,7 +101,7 @@ impl VdCorput {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```rust
     /// use lds_rs::ilds::VdCorput;
     ///
     /// let mut vd_corput = VdCorput::new(2, 10);
@@ -140,7 +140,7 @@ impl VdCorput {
 ///
 /// # Examples
 ///
-/// ```
+/// ```rust
 /// use lds_rs::ilds::Halton;
 ///
 /// let mut hgen = Halton::new(&[2, 3], &[11, 7]);
@@ -198,5 +198,35 @@ impl Halton {
     pub fn reseed(&mut self, seed: usize) {
         self.vdc0.reseed(seed);
         self.vdc1.reseed(seed);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_vdc() {
+        let base = 2;
+        let scale = 10;
+        let k = 10;
+        let res = vdc_i(k, base, scale);
+        assert_eq!(res, 320);
+    }
+
+    #[test]
+    fn test_vdcorput() {
+        let mut vgen = VdCorput::new(2, 10);
+        vgen.reseed(10);
+        let result = vgen.pop();
+        assert_eq!(result, 832);
+    }
+
+    #[test]
+    fn test_halton() {
+        let mut hgen = Halton::new(&[2, 3], &[11, 7]);
+        hgen.reseed(0);
+        let result = hgen.pop();
+        assert_eq!(result, [1024, 729]);
     }
 }

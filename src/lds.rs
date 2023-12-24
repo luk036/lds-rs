@@ -9,7 +9,7 @@ const TWO_PI: f64 = std::f64::consts::TAU;
 ///
 /// # Examples
 ///
-/// ```
+/// ```rust
 /// use lds_rs::lds::vdc;
 ///
 /// assert_eq!(vdc(11, 2), 0.8125);
@@ -39,7 +39,7 @@ pub fn vdc(k: usize, base: usize) -> f64 {
 ///
 /// # Examples
 ///
-/// ```
+/// ```rust
 /// use lds_rs::VdCorput;
 ///
 /// let mut vgen = VdCorput::new(2);
@@ -67,7 +67,6 @@ impl VdCorput {
     /// Returns:
     ///
     /// The `new` function returns a `VdCorput` object.
-    /// ```
     pub const fn new(base: usize) -> Self {
         VdCorput { count: 0, base }
     }
@@ -81,7 +80,7 @@ impl VdCorput {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```rust
     /// use lds_rs::lds::VdCorput;
     ///
     /// let mut vd_corput = VdCorput::new(2);

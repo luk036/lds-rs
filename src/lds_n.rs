@@ -34,6 +34,7 @@ pub struct HaltonN {
 /// let res = hgen.pop_vec();
 ///
 /// assert_approx_eq!(res[0], 0.65625);
+/// ```
 impl HaltonN {
     /// Creates a new [`HaltonN`].
     ///
