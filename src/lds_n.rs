@@ -79,6 +79,8 @@ impl HaltonN {
     /// sequence from the beginning or from a specific point in the sequence, depending on the value of the
     /// seed.
     pub fn reseed(&mut self, seed: usize) {
-        self.vdcs.iter_mut().for_each(|vdc| vdc.reseed(seed));
+        for vdc in self.vdcs.iter_mut() {
+            vdc.reseed(seed);
+        }
     }
 }
