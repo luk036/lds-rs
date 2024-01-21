@@ -56,7 +56,7 @@ mod tests {
         let res = s3fgen.pop();
         assert_approx_eq!(res[0], 0.23764785962349413);
 
-        let mut hgen = HaltonN::new(5, &PRIME_TABLE);
+        let mut hgen = HaltonN::new(&PRIME_TABLE[0..5]);
         hgen.reseed(10);
         for _i in 0..10 {
             println!("{:?}", hgen.pop_vec());
