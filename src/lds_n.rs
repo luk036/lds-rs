@@ -43,8 +43,6 @@ impl HaltonN {
     ///
     /// Arguments:
     ///
-    /// * `n`: The `n` parameter represents the number of dimensions in the Halton sequence. It
-    /// determines how many different Van der Corput sequences will be generated.
     /// * `base`: The `base` parameter is a slice of `usize` values. It represents the base values for
     /// each dimension of the Halton sequence. Each dimension of the Halton sequence uses a different
     /// base value to generate the sequence.
