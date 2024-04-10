@@ -117,7 +117,7 @@ impl VdCorput {
 /// ```
 /// use lds_rs::Halton;
 ///
-/// let mut hgen = Halton::new(2, 3);
+/// let mut hgen = Halton::new(&[2, 3]);
 /// hgen.reseed(10);
 /// let result = hgen.pop();
 /// assert_eq!(result[0], 0.8125);
@@ -141,10 +141,10 @@ impl Halton {
     /// Returns:
     ///
     /// The `new` function returns an instance of the `Halton` struct.
-    pub fn new(base0: usize, base1: usize) -> Self {
+    pub fn new(base: &[usize]) -> Self {
         Self {
-            vdc0: VdCorput::new(base0),
-            vdc1: VdCorput::new(base1),
+            vdc0: VdCorput::new(base[0]),
+            vdc1: VdCorput::new(base[1]),
         }
     }
 
@@ -170,7 +170,7 @@ impl Halton {
     /// ```
     /// use lds_rs::lds::Halton;
     ///
-    /// let mut halton = Halton::new(2, 5);
+    /// let mut halton = Halton::new(&[2, 5]);
     /// assert_eq!(halton.pop(), [0.5, 0.2]);
     /// ```
     pub fn pop(&mut self) -> [f64; 2] {
@@ -626,12 +626,70 @@ pub const PRIME_TABLE: [usize; 1000] = [
 #[cfg(test)]
 mod tests {
     use super::*;
+    use approx_eq::assert_approx_eq;
+
     #[test]
     fn test_vdc() {
-        assert_eq!(vdc(1, 2), 0.5);
-        assert_eq!(vdc(2, 2), 0.25);
-        assert_eq!(vdc(3, 2), 0.75);
-        assert_eq!(vdc(4, 2), 0.125);
-        assert_eq!(vdc(5, 2), 0.625);
+        assert_approx_eq!(vdc(11, 2), 0.8125);
+    }
+
+    #[test]
+    fn test_vdcorput() {
+        let mut vgen = VdCorput::new(2);
+        vgen.reseed(0);
+        assert_approx_eq!(vgen.pop(), 0.5);
+    }
+
+    #[test]
+    fn test_halton() {
+        let mut hgen = Halton::new(&[2, 3]);
+        hgen.reseed(0);
+        let res = hgen.pop();
+        assert_approx_eq!(res[0], 0.5);
+    }
+
+    #[test]
+    fn test_circle() {
+        let mut cgen = Circle::new(2);
+        cgen.reseed(0);
+        let res = cgen.pop();
+        assert_approx_eq!(res[1], -1.0);
+        let res = cgen.pop();
+        assert_approx_eq!(res[0], 1.0);
+    }
+
+    #[test]
+    fn test_sphere() {
+        let mut sgen = Sphere::new(&[2, 3]);
+        sgen.reseed(0);
+        let res = sgen.pop();
+        assert_approx_eq!(res[1], -0.5);
+        assert_approx_eq!(res[2], 0.0);
+        let res = sgen.pop();
+        assert_approx_eq!(res[0], -0.75);
+        assert_approx_eq!(res[2], -0.5);
+    }
+
+    #[test]
+    fn test_sphere3hopf() {
+        let mut sgen = Sphere3Hopf::new(&[2, 3, 5]);
+        sgen.reseed(0);
+        let res = sgen.pop();
+        assert_approx_eq!(res[0], -0.22360679774997885);
+        assert_approx_eq!(res[1], 0.3872983346207417);
+        assert_approx_eq!(res[2], 0.44721359549995726);
+        assert_approx_eq!(res[3], -0.7745966692414837);
+    }
+
+    #[test]
+    fn test_halton_n() {
+        let mut hgen = HaltonN::new(&vec![2, 3, 5]);
+        hgen.reseed(0);
+        let res = hgen.pop_vec();
+        assert_approx_eq!(res[0], 0.5);
+        assert_approx_eq!(res[2], 0.2);
+        let res = hgen.pop_vec();
+        assert_approx_eq!(res[0], 0.25);
+        assert_approx_eq!(res[2], 0.4);
     }
 }

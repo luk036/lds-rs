@@ -24,9 +24,10 @@
 /// assert_eq!(vdc_i(10, 2, 2), 1);
 /// assert_eq!(vdc_i(10, 2, 3), 2);
 /// ```
-pub const fn vdc_i(mut k: usize, base: usize, scale: u32) -> usize {
+pub const fn vdc_i(k: usize, base: usize, scale: u32) -> usize {
     let mut res = 0;
     let mut factor = base.pow(scale);
+    let mut k = k;
     while k != 0 {
         let remainder = k % base;
         factor /= base;
