@@ -635,4 +635,3 @@ mod tests {
         assert_eq!(vdc(5, 2), 0.625);
     }
 }
-

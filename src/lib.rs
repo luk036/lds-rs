@@ -2,9 +2,9 @@ pub mod ilds;
 pub mod lds;
 // pub mod lds_n;
 
+pub use crate::lds::HaltonN;
 pub use crate::lds::PRIME_TABLE;
 pub use crate::lds::{Circle, Halton, Sphere, Sphere3Hopf, VdCorput};
-pub use crate::lds::HaltonN;
 
 #[cfg(test)]
 mod tests {
