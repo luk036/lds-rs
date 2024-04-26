@@ -683,7 +683,7 @@ mod tests {
 
     #[test]
     fn test_halton_n() {
-        let mut hgen = HaltonN::new(&vec![2, 3, 5]);
+        let mut hgen = HaltonN::new(&[2, 3, 5]);
         hgen.reseed(0);
         let res = hgen.pop_vec();
         assert_approx_eq!(res[0], 0.5);
