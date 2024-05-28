@@ -449,9 +449,9 @@ impl Sphere3Hopf {
     pub fn pop(&mut self) -> [f64; 4] {
         let phi = self.vdc0.pop() * TWO_PI; // map to [0, 2*pi];
         let psy = self.vdc1.pop() * TWO_PI; // map to [0, 2*pi];
-        let vd = self.vdc2.pop();
-        let cos_eta = vd.sqrt();
-        let sin_eta = (1.0 - vd).sqrt();
+        let vdc = self.vdc2.pop();
+        let cos_eta = vdc.sqrt();
+        let sin_eta = (1.0 - vdc).sqrt();
         [
             cos_eta * psy.cos(),
             cos_eta * psy.sin(),
