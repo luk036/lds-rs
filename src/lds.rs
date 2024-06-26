@@ -87,7 +87,7 @@ impl VdCorput {
     /// assert_eq!(vd_corput.pop(), 0.5);
     /// ```
     pub fn pop(&mut self) -> f64 {
-        self.count += 1;
+        self.count += 1; // ignore 0
         vdc(self.count, self.base)
     }
 
@@ -204,7 +204,7 @@ impl Halton {
 /// let mut cgen = Circle::new(2);
 /// cgen.reseed(1);
 /// let result = cgen.pop();
-/// assert_eq!(result[0], 1.0);
+/// assert_eq!(result[1], 1.0);
 /// ```
 #[derive(Debug)]
 pub struct Circle {
@@ -248,13 +248,13 @@ impl Circle {
     ///
     /// let mut circle = Circle::new(2);
     /// let result = circle.pop();
-    /// assert_approx_eq!(result[0], 0.0);
-    /// assert_approx_eq!(result[1], -1.0);
+    /// assert_approx_eq!(result[1], 0.0);
+    /// assert_approx_eq!(result[0], -1.0);
     /// ```
     pub fn pop(&mut self) -> [f64; 2] {
         // let two_pi = 2.0/// (-1.0 as f64).acos(); // ???
         let theta = self.vdc.pop() * TWO_PI; // map to [0, 2*pi];
-        [theta.sin(), theta.cos()]
+        [theta.cos(), theta.sin()]
     }
 
     /// The below code is a Rust function called `reseed` that is used to reset the state of a sequence
@@ -334,8 +334,8 @@ impl Sphere {
     ///
     /// let mut sphere = Sphere::new(&[2, 3]);
     /// let result = sphere.pop();
-    /// assert_approx_eq!(result[0], 0.8660254037844387);
-    /// assert_approx_eq!(result[1], -0.5);
+    /// assert_approx_eq!(result[0], -0.5);
+    /// assert_approx_eq!(result[1], 0.8660254037844387);
     /// assert_approx_eq!(result[2], 0.0);
     /// ```
     pub fn pop(&mut self) -> [f64; 3] {
@@ -653,9 +653,9 @@ mod tests {
         let mut cgen = Circle::new(2);
         cgen.reseed(0);
         let res = cgen.pop();
-        assert_approx_eq!(res[1], -1.0);
+        assert_approx_eq!(res[0], -1.0);
         let res = cgen.pop();
-        assert_approx_eq!(res[0], 1.0);
+        assert_approx_eq!(res[1], 1.0);
     }
 
     #[test]
@@ -663,10 +663,10 @@ mod tests {
         let mut sgen = Sphere::new(&[2, 3]);
         sgen.reseed(0);
         let res = sgen.pop();
-        assert_approx_eq!(res[1], -0.5);
+        assert_approx_eq!(res[0], -0.5);
         assert_approx_eq!(res[2], 0.0);
         let res = sgen.pop();
-        assert_approx_eq!(res[0], -0.75);
+        assert_approx_eq!(res[1], -0.75);
         assert_approx_eq!(res[2], -0.5);
     }
 

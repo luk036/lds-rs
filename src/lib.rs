@@ -30,7 +30,7 @@ mod tests {
             println!("{:?}", cgen.pop());
         }
         let res = cgen.pop();
-        assert_approx_eq!(res[0], -0.8314696123025452);
+        assert_approx_eq!(res[1], -0.8314696123025452);
 
         let mut hgen = Halton::new(&[2, 3]);
         hgen.reseed(10);
@@ -46,7 +46,7 @@ mod tests {
             println!("{:?}", sgen.pop());
         }
         let res = sgen.pop();
-        assert_approx_eq!(res[0], 0.8722297870746605);
+        assert_approx_eq!(res[1], 0.8722297870746605);
 
         let mut s3fgen = Sphere3Hopf::new(&base);
         s3fgen.reseed(10);
