@@ -10,7 +10,7 @@ checksum = "b3f9eb837c6a783fbf002e3e5cc7925a3aa6893d6d42f9169517528983777590"
 
 [[package]]
 name = "lds-rs"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "approx_eq",
 ]
