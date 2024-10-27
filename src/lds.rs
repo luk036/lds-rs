@@ -76,6 +76,7 @@ pub fn vdc(k: usize, base: usize) -> f64 {
 pub struct VdCorput {
     count: usize,
     base: usize,
+    rev_lst: [f64; 64],
 }
 
 impl VdCorput {
@@ -91,8 +92,14 @@ impl VdCorput {
     /// Returns:
     ///
     /// The `new` function returns a `VdCorput` object.
-    pub const fn new(base: usize) -> Self {
-        VdCorput { count: 0, base }
+    pub fn new(base: usize) -> Self {
+        let mut rev_lst = [0.0; 64];
+        let mut reverse = 1.0;
+        for i in 0..64 {
+            reverse /= base as f64;
+            rev_lst[i] = reverse;
+        }
+        VdCorput { count: 0, base, rev_lst }
     }
 
     /// The `pop` function is a member function of the [`VdCorput`] class in Rust that increments the count
@@ -112,7 +119,16 @@ impl VdCorput {
     /// ```
     pub fn pop(&mut self) -> f64 {
         self.count += 1; // ignore 0
-        vdc(self.count, self.base)
+        let mut res = 0.0;
+        let mut k = self.count;
+        let mut i = 0;
+        while k != 0 {
+            let remainder = k % self.base;
+            k /= self.base;
+            res += remainder as f64 * self.rev_lst[i];
+            i += 1;
+        }
+        res
     }
 
     /// The below code is a Rust function called `reseed` that is used to reset the state of a sequence
