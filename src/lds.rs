@@ -99,7 +99,11 @@ impl VdCorput {
             reverse /= base as f64;
             rev_lst[i] = reverse;
         }
-        VdCorput { count: 0, base, rev_lst }
+        VdCorput {
+            count: 0,
+            base,
+            rev_lst,
+        }
     }
 
     /// The `pop` function is a member function of the [`VdCorput`] class in Rust that increments the count
