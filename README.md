@@ -1,4 +1,4 @@
-# lds-rs
+# 🤏 lds-rs
 
 [![Crates.io](https://img.shields.io/crates/v/lds-rs.svg)](https://crates.io/crates/lds-rs)
 [![Docs.rs](https://docs.rs/lds-rs/badge.svg)](https://docs.rs/lds-rs)
