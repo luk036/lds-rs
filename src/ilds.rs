@@ -220,6 +220,56 @@ impl Halton {
     }
 }
 
+macro_rules! div_mod_3_iter {
+    ($input:expr) => {{
+        let q = $input >> 2; // Equivalent to extracting upper bits
+        let r = $input & 0x03; // Equivalent to extracting lower 2 bits
+        (q, q + r) // Return the sum of q and r
+    }};
+}
+
+pub fn div_mod_3_u8(n: u8) -> (u8, u8) {
+    // Perform the iterations using the macro
+    let (q1, rem1) = div_mod_3_iter!(n); // First iteration
+    let (q2, rem2) = div_mod_3_iter!(rem1); // Second iteration
+    let (q3, rem3) = div_mod_3_iter!(rem2); // Third iteration
+    let (q4, rem4) = div_mod_3_iter!(rem3); // Fourth iteration
+
+    // Calculate the final quotient sum
+    let quotient_sum = q1 + q2 + q3 + q4;
+
+    // Final check and output assignment
+    if rem4 == 0x03 {
+        // Equivalent to rem4 == 2'b11
+        (quotient_sum + 1, 0x00) // Equivalent to quotient_sum + 1 and remainder 2'b00
+    } else {
+        (quotient_sum, rem4) // Equivalent to quotient_sum and rem4[1:0]
+    }
+}
+
+pub fn div_mod_3_u16(n: u16) -> (u16, u16) {
+    // Perform the iterations using the macro
+    let (q1, rem1) = div_mod_3_iter!(n); // First iteration
+    let (q2, rem2) = div_mod_3_iter!(rem1); // Second iteration
+    let (q3, rem3) = div_mod_3_iter!(rem2); // Third iteration
+    let (q4, rem4) = div_mod_3_iter!(rem3); // Fourth iteration
+    let (q5, rem5) = div_mod_3_iter!(rem4); // 5th iteration
+    let (q6, rem6) = div_mod_3_iter!(rem5); // 6th iteration
+    let (q7, rem7) = div_mod_3_iter!(rem6); // 7th iteration
+    let (q8, rem8) = div_mod_3_iter!(rem7); // 8th iteration
+
+    // Calculate the final quotient sum
+    let quotient_sum = q1 + q2 + q3 + q4 + q5 + q6 + q7 + q8;
+
+    // Final check and output assignment
+    if rem8 == 0x03 {
+        // Equivalent to rem4 == 2'b11
+        (quotient_sum + 1, 0x00) // Equivalent to quotient_sum + 1 and remainder 2'b00
+    } else {
+        (quotient_sum, rem8) // Equivalent to quotient_sum and rem8[1:0]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -247,5 +297,27 @@ mod tests {
         hgen.reseed(0);
         let result = hgen.pop();
         assert_eq!(result, [1024, 729]);
+    }
+
+    #[test]
+    fn test_div_mod_3_u8() {
+        let (q, r) = div_mod_3_u8(10);
+        assert_eq!(q, 3);
+        assert_eq!(r, 1);
+
+        let (q, r) = div_mod_3_u8(12);
+        assert_eq!(q, 4);
+        assert_eq!(r, 0);
+    }
+
+    #[test]
+    fn test_div_mod_3_u16() {
+        let (q, r) = div_mod_3_u16(10000);
+        assert_eq!(q, 3333);
+        assert_eq!(r, 1);
+
+        let (q, r) = div_mod_3_u16(10002);
+        assert_eq!(q, 3334);
+        assert_eq!(r, 0);
     }
 }
