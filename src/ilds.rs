@@ -270,6 +270,52 @@ pub fn div_mod_3_u16(n: u16) -> (u16, u16) {
     }
 }
 
+macro_rules! div_mod_7_iter {
+    ($input:expr) => {{
+        let q = $input >> 3; // Equivalent to extracting upper bits
+        let r = $input & 0x07; // Equivalent to extracting lower 3 bits
+        (q, q + r) // Return the sum of q and r
+    }};
+}
+
+pub fn div_mod_7_u8(n: u8) -> (u8, u8) {
+    // Perform the iterations using the macro
+    let (q1, rem1) = div_mod_7_iter!(n); // First iteration
+    let (q2, rem2) = div_mod_7_iter!(rem1); // Second iteration
+    let (q3, rem3) = div_mod_7_iter!(rem2); // Third iteration
+
+    // Calculate the final quotient sum
+    let quotient_sum = q1 + q2 + q3;
+
+    // Final check and output assignment
+    if rem3 == 0x07 {
+        // Equivalent to rem3 == 3'b111
+        (quotient_sum + 1, 0x000) // Equivalent to quotient_sum + 1 and remainder 3'b000
+    } else {
+        (quotient_sum, rem3) // Equivalent to quotient_sum and rem3[1:0]
+    }
+}
+
+pub fn div_mod_7_u16(n: u16) -> (u16, u16) {
+    // Perform the iterations using the macro
+    let (q1, rem1) = div_mod_7_iter!(n); // First iteration
+    let (q2, rem2) = div_mod_7_iter!(rem1); // Second iteration
+    let (q3, rem3) = div_mod_7_iter!(rem2); // Third iteration
+    let (q4, rem4) = div_mod_7_iter!(rem3); // Fourth iteration
+    let (q5, rem5) = div_mod_7_iter!(rem4); // 5th iteration
+
+    // Calculate the final quotient sum
+    let quotient_sum = q1 + q2 + q3 + q4 + q5;
+
+    // Final check and output assignment
+    if rem5 == 0x07 {
+        // Equivalent to rem5 == 3'b111
+        (quotient_sum + 1, 0x000) // Equivalent to quotient_sum + 1 and remainder 3'b000
+    } else {
+        (quotient_sum, rem5) // Equivalent to quotient_sum and rem5[1:0]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -318,6 +364,28 @@ mod tests {
 
         let (q, r) = div_mod_3_u16(10002);
         assert_eq!(q, 3334);
+        assert_eq!(r, 0);
+    }
+
+    #[test]
+    fn test_div_mod_7_u8() {
+        let (q, r) = div_mod_7_u8(10);
+        assert_eq!(q, 1);
+        assert_eq!(r, 3);
+
+        let (q, r) = div_mod_7_u8(14);
+        assert_eq!(q, 2);
+        assert_eq!(r, 0);
+    }
+
+    #[test]
+    fn test_div_mod_7_u16() {
+        let (q, r) = div_mod_7_u16(10000);
+        assert_eq!(q, 1428);
+        assert_eq!(r, 4);
+
+        let (q, r) = div_mod_7_u16(14000);
+        assert_eq!(q, 2000);
         assert_eq!(r, 0);
     }
 }
