@@ -311,6 +311,99 @@ impl Circle {
     }
 }
 
+/// The [`Disk`] struct is a sequence generator that generates points in a 2-dimensional space using the
+/// Disk sequence.
+///
+/// Properties:
+///
+/// * `vdc0`: A variable of type [`VdCorput`] that represents the Van der Corput sequence generator for
+///           the first base. The Van der Corput sequence is a low-discrepancy sequence that is commonly used in
+///           quasi-Monte Carlo methods. It generates a sequence of numbers between 0 and
+/// * `vdc1`: The `vdc1` property is an instance of the [`VdCorput`] struct, which is responsible for
+///           generating the Van der Corput sequence with a base of 3. The Van der Corput sequence is another
+///           low-discrepancy sequence commonly used in quasi-Monte Carlo methods
+///
+/// # Examples
+///
+/// ```
+/// use lds_rs::Disk;
+/// use approx_eq::assert_approx_eq;
+///
+/// let mut dgen = Disk::new(&[2, 3]);
+/// dgen.reseed(0);
+/// let result = dgen.pop();
+/// assert_approx_eq!(result[0], -0.5773502691896257);
+/// ```
+#[derive(Debug)]
+pub struct Disk {
+    vdc0: VdCorput,
+    vdc1: VdCorput,
+}
+
+impl Disk {
+    /// The `new` function creates a new [`Disk`] object with specified bases for generating the Disk
+    /// sequence.
+    ///
+    /// Arguments:
+    ///
+    /// * `base`: The `base` parameter is an array of two `usize` values. These values are used as the bases
+    ///           for generating the Disk sequence. The first value in the array (`base[0]`) is used as the base for
+    ///           generating the first component of the Disk sequence, and the second
+    ///
+    /// Returns:
+    ///
+    /// The `new` function returns an instance of the `Disk` struct.
+    pub fn new(base: &[usize]) -> Self {
+        Self {
+            vdc0: VdCorput::new(base[0]),
+            vdc1: VdCorput::new(base[1]),
+        }
+    }
+
+    /// Returns the pop of this [`Disk`].
+    ///
+    /// The `pop()` function is used to generate the next value in the sequence.
+    /// For example, in the [`VdCorput`] class, `pop()` increments the count and
+    /// calculates the Van der Corput sequence value for that count and base. In
+    /// the [`Disk`] class, `pop()` returns the next point in the Disk sequence
+    /// as a `[f64; 2]`. Similarly, in the `Circle` class, `pop()`
+    /// returns the next point on the unit circle as a `[f64; 2]`. In
+    /// the `Sphere` class, `pop()` returns the next point on the unit sphere as a
+    /// `[f64; 3]`. And in the `Sphere3Hopf` class, `pop()` returns
+    /// the next point on the 3-sphere using the Hopf fibration as a
+    /// `[f64; 4]`.
+    ///
+    /// Returns:
+    ///
+    /// An array of two f64 values is being returned.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use lds_rs::lds::Disk;
+    /// use approx_eq::assert_approx_eq;
+    ///
+    /// let mut dgen = Disk::new(&[2, 3]);
+    /// let result = dgen.pop();
+    /// assert_approx_eq!(result[0], -0.5773502691896257);
+    /// ```
+    pub fn pop(&mut self) -> [f64; 2] {
+        let theta = self.vdc0.pop() * TWO_PI; // map to [0, 2*pi];
+        let radius = self.vdc1.pop().sqrt();
+        [radius * theta.cos(), radius * theta.sin()]
+    }
+
+    /// The below code is a Rust function called `reseed` that is used to reset the state of a sequence
+    /// generator to a specific seed value. This allows the sequence generator to start generating the
+    /// sequence from the beginning or from a specific point in the sequence, depending on the value of the
+    /// seed.
+    #[allow(dead_code)]
+    pub fn reseed(&mut self, seed: usize) {
+        self.vdc0.reseed(seed);
+        self.vdc1.reseed(seed);
+    }
+}
+
 /// Sphere sequence generator
 ///
 /// The `Sphere` struct is a generator for a sequence of points on a sphere.
@@ -474,7 +567,7 @@ impl Sphere3Hopf {
     /// The `pop()` function is used to generate the next value in the sequence.
     /// For example, in the [`VdCorput`] class, `pop()` increments the count and
     /// calculates the Van der Corput sequence value for that count and base. In
-    /// the [`Halton`] class, `pop()` returns the next point in the Halton sequence
+    /// the [`Disk`] class, `pop()` returns the next point in the Disk sequence
     /// as a `[f64; 2]`. Similarly, in the [`Circle`] class, `pop()`
     /// returns the next point on the unit circle as a `[f64; 2]`. In
     /// the [`Sphere`] class, `pop()` returns the next point on the unit sphere as a

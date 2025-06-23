@@ -4,7 +4,7 @@ pub mod lds;
 
 pub use crate::lds::HaltonN;
 pub use crate::lds::PRIME_TABLE;
-pub use crate::lds::{Circle, Halton, Sphere, Sphere3Hopf, VdCorput};
+pub use crate::lds::{Circle, Disk, Halton, Sphere, Sphere3Hopf, VdCorput};
 
 #[cfg(test)]
 mod tests {
@@ -31,6 +31,14 @@ mod tests {
         }
         let res = cgen.pop();
         assert_approx_eq!(res[1], -0.8314696123025452);
+
+        let mut dgen = Disk::new(&[2, 3]);
+        dgen.reseed(0);
+        for _i in 0..10 {
+            println!("{:?}", dgen.pop());
+        }
+        let res = dgen.pop();
+        assert_approx_eq!(res[0], 0.32102183949750684);
 
         let mut hgen = Halton::new(&[2, 3]);
         hgen.reseed(10);
