@@ -775,6 +775,14 @@ mod tests {
         let mut vgen = VdCorput::new(2);
         vgen.reseed(0);
         assert_approx_eq!(vgen.pop(), 0.5);
+        assert_approx_eq!(vgen.pop(), 0.25);
+        assert_approx_eq!(vgen.pop(), 0.75);
+
+        let mut vgen = VdCorput::new(3);
+        vgen.reseed(0);
+        assert_approx_eq!(vgen.pop(), 1.0/3.0);
+        assert_approx_eq!(vgen.pop(), 2.0/3.0);
+        assert_approx_eq!(vgen.pop(), 1.0/9.0);
     }
 
     #[test]
@@ -783,6 +791,10 @@ mod tests {
         hgen.reseed(0);
         let res = hgen.pop();
         assert_approx_eq!(res[0], 0.5);
+        assert_approx_eq!(res[1], 1.0/3.0);
+        let res = hgen.pop();
+        assert_approx_eq!(res[0], 0.25);
+        assert_approx_eq!(res[1], 2.0/3.0);
     }
 
     #[test]
@@ -791,8 +803,19 @@ mod tests {
         cgen.reseed(0);
         let res = cgen.pop();
         assert_approx_eq!(res[0], -1.0);
+        assert_approx_eq!(res[1], 0.0);
         let res = cgen.pop();
+        assert_approx_eq!(res[0], 0.0);
         assert_approx_eq!(res[1], 1.0);
+    }
+
+    #[test]
+    fn test_disk() {
+        let mut dgen = Disk::new(&[2, 3]);
+        dgen.reseed(0);
+        let res = dgen.pop();
+        assert_approx_eq!(res[0], -0.5773502691896258);
+        assert_approx_eq!(res[1], 0.0);
     }
 
     #[test]
@@ -801,8 +824,10 @@ mod tests {
         sgen.reseed(0);
         let res = sgen.pop();
         assert_approx_eq!(res[0], -0.5);
+        assert_approx_eq!(res[1], 0.8660254037844387);
         assert_approx_eq!(res[2], 0.0);
         let res = sgen.pop();
+        assert_approx_eq!(res[0], -0.4330127018922193);
         assert_approx_eq!(res[1], -0.75);
         assert_approx_eq!(res[2], -0.5);
     }
@@ -824,9 +849,11 @@ mod tests {
         hgen.reseed(0);
         let res = hgen.pop_vec();
         assert_approx_eq!(res[0], 0.5);
+        assert_approx_eq!(res[1], 1.0/3.0);
         assert_approx_eq!(res[2], 0.2);
         let res = hgen.pop_vec();
         assert_approx_eq!(res[0], 0.25);
+        assert_approx_eq!(res[1], 2.0/3.0);
         assert_approx_eq!(res[2], 0.4);
     }
 }

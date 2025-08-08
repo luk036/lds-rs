@@ -327,14 +327,24 @@ mod tests {
         let k = 10;
         let res = vdc_i(k, base, scale);
         assert_eq!(res, 320);
+        assert_eq!(vdc_i(1, 2, 10), 512);
+        assert_eq!(vdc_i(2, 2, 10), 256);
+        assert_eq!(vdc_i(3, 2, 10), 768);
     }
 
     #[test]
     fn test_vdcorput() {
         let mut vgen = VdCorput::new(2, 10);
-        vgen.reseed(10);
-        let result = vgen.pop();
-        assert_eq!(result, 832);
+        vgen.reseed(0);
+        assert_eq!(vgen.pop(), 512);
+        assert_eq!(vgen.pop(), 256);
+        assert_eq!(vgen.pop(), 768);
+
+        let mut vgen2 = VdCorput::new(3, 7);
+        vgen2.reseed(0);
+        assert_eq!(vgen2.pop(), 729);
+        assert_eq!(vgen2.pop(), 1458);
+        assert_eq!(vgen2.pop(), 243);
     }
 
     #[test]
@@ -343,6 +353,8 @@ mod tests {
         hgen.reseed(0);
         let result = hgen.pop();
         assert_eq!(result, [1024, 729]);
+        let result = hgen.pop();
+        assert_eq!(result, [512, 1458]);
     }
 
     #[test]
