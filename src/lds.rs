@@ -780,9 +780,9 @@ mod tests {
 
         let mut vgen = VdCorput::new(3);
         vgen.reseed(0);
-        assert_approx_eq!(vgen.pop(), 1.0/3.0);
-        assert_approx_eq!(vgen.pop(), 2.0/3.0);
-        assert_approx_eq!(vgen.pop(), 1.0/9.0);
+        assert_approx_eq!(vgen.pop(), 1.0 / 3.0);
+        assert_approx_eq!(vgen.pop(), 2.0 / 3.0);
+        assert_approx_eq!(vgen.pop(), 1.0 / 9.0);
     }
 
     #[test]
@@ -791,10 +791,10 @@ mod tests {
         hgen.reseed(0);
         let res = hgen.pop();
         assert_approx_eq!(res[0], 0.5);
-        assert_approx_eq!(res[1], 1.0/3.0);
+        assert_approx_eq!(res[1], 1.0 / 3.0);
         let res = hgen.pop();
         assert_approx_eq!(res[0], 0.25);
-        assert_approx_eq!(res[1], 2.0/3.0);
+        assert_approx_eq!(res[1], 2.0 / 3.0);
     }
 
     #[test]
@@ -849,11 +849,11 @@ mod tests {
         hgen.reseed(0);
         let res = hgen.pop_vec();
         assert_approx_eq!(res[0], 0.5);
-        assert_approx_eq!(res[1], 1.0/3.0);
+        assert_approx_eq!(res[1], 1.0 / 3.0);
         assert_approx_eq!(res[2], 0.2);
         let res = hgen.pop_vec();
         assert_approx_eq!(res[0], 0.25);
-        assert_approx_eq!(res[1], 2.0/3.0);
+        assert_approx_eq!(res[1], 2.0 / 3.0);
         assert_approx_eq!(res[2], 0.4);
     }
 }
