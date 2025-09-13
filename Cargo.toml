@@ -1,6 +1,6 @@
 [package]
 name = "lds-rs"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 description = "Low Discrepancy Sequence Generation in Rust"
 repository = "https://github.com/luk036/lds-rs"
