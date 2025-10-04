@@ -35,8 +35,9 @@ const TWO_PI: f64 = std::f64::consts::TAU;
 ///
 /// ```rust
 /// use lds_rs::lds::vdc;
+/// use approx_eq::assert_approx_eq;
 ///
-/// assert_eq!(vdc(11, 2), 0.8125);
+/// assert_approx_eq!(vdc(11, 2), 0.8125);
 /// ```
 pub fn vdc(k: usize, base: usize) -> f64 {
     let mut res = 0.0;
@@ -117,9 +118,16 @@ impl VdCorput {
     ///
     /// ```rust
     /// use lds_rs::lds::VdCorput;
+    /// use approx_eq::assert_approx_eq;
     ///
     /// let mut vd_corput = VdCorput::new(2);
-    /// assert_eq!(vd_corput.pop(), 0.5);
+    /// assert_approx_eq!(vd_corput.pop(), 0.5);
+    ///
+    /// let mut vgen = VdCorput::new(2);
+    /// vgen.reseed(0);
+    /// assert_approx_eq!(vgen.pop(), 0.5);
+    /// assert_approx_eq!(vgen.pop(), 0.25);
+    /// assert_approx_eq!(vgen.pop(), 0.75);
     /// ```
     pub fn pop(&mut self) -> f64 {
         self.count += 1; // ignore 0
@@ -213,9 +221,21 @@ impl Halton {
     ///
     /// ```
     /// use lds_rs::lds::Halton;
+    /// use approx_eq::assert_approx_eq;
     ///
     /// let mut halton = Halton::new(&[2, 5]);
-    /// assert_eq!(halton.pop(), [0.5, 0.2]);
+    /// let result1 = halton.pop();
+    /// assert_approx_eq!(result1[0], 0.5);
+    /// assert_approx_eq!(result1[1], 0.2);
+    ///
+    /// let mut hgen = Halton::new(&[2, 3]);
+    /// hgen.reseed(0);
+    /// let res = hgen.pop();
+    /// assert_approx_eq!(res[0], 0.5);
+    /// assert_approx_eq!(res[1], 1.0 / 3.0);
+    /// let res = hgen.pop();
+    /// assert_approx_eq!(res[0], 0.25);
+    /// assert_approx_eq!(res[1], 2.0 / 3.0);
     /// ```
     pub fn pop(&mut self) -> [f64; 2] {
         [self.vdc0.pop(), self.vdc1.pop()]
@@ -292,8 +312,17 @@ impl Circle {
     ///
     /// let mut circle = Circle::new(2);
     /// let result = circle.pop();
-    /// assert_approx_eq!(result[1], 0.0);
     /// assert_approx_eq!(result[0], -1.0);
+    /// assert_approx_eq!(result[1], 0.0);
+    ///
+    /// let mut cgen = Circle::new(2);
+    /// cgen.reseed(0);
+    /// let res = cgen.pop();
+    /// assert_approx_eq!(res[0], -1.0);
+    /// assert_approx_eq!(res[1], 0.0);
+    /// let res = cgen.pop();
+    /// assert_approx_eq!(res[0], 0.0);
+    /// assert_approx_eq!(res[1], 1.0);
     /// ```
     pub fn pop(&mut self) -> [f64; 2] {
         // let two_pi = 2.0/// (-1.0 as f64).acos(); // ???
@@ -386,6 +415,12 @@ impl Disk {
     /// let mut dgen = Disk::new(&[2, 3]);
     /// let result = dgen.pop();
     /// assert_approx_eq!(result[0], -0.5773502691896257);
+    ///
+    /// let mut dgen = Disk::new(&[2, 3]);
+    /// dgen.reseed(0);
+    /// let res = dgen.pop();
+    /// assert_approx_eq!(res[0], -0.5773502691896258);
+    /// assert_approx_eq!(res[1], 0.0);
     /// ```
     pub fn pop(&mut self) -> [f64; 2] {
         let theta = self.vdc0.pop() * TWO_PI; // map to [0, 2*pi];
@@ -474,6 +509,17 @@ impl Sphere {
     /// assert_approx_eq!(result[0], -0.5);
     /// assert_approx_eq!(result[1], 0.8660254037844387);
     /// assert_approx_eq!(result[2], 0.0);
+    ///
+    /// let mut sgen = Sphere::new(&[2, 3]);
+    /// sgen.reseed(0);
+    /// let res = sgen.pop();
+    /// assert_approx_eq!(res[0], -0.5);
+    /// assert_approx_eq!(res[1], 0.8660254037844387);
+    /// assert_approx_eq!(res[2], 0.0);
+    /// let res = sgen.pop();
+    /// assert_approx_eq!(res[0], -0.4330127018922193);
+    /// assert_approx_eq!(res[1], -0.75);
+    /// assert_approx_eq!(res[2], -0.5);
     /// ```
     pub fn pop(&mut self) -> [f64; 3] {
         let cosphi = 2.0 * self.vdc.pop() - 1.0; // map to [-1, 1];
@@ -556,11 +602,6 @@ impl Sphere3Hopf {
         }
     }
 
-    /// The `pop` function returns a four-element array representing the coordinates of a point on a
-    /// sphere in 3D space.
-    ///
-    /// Returns:
-    ///
     /// The function `pop` returns an array of four `f64` values.
     /// Returns the pop of this [`Sphere3Hopf`].
     ///
@@ -583,6 +624,15 @@ impl Sphere3Hopf {
     /// let mut sgen = Sphere3Hopf::new(&[2, 3, 5]);
     /// let result = sgen.pop();
     /// assert_approx_eq!(result[2], 0.4472135954999573);
+    ///
+    /// let mut sgen = Sphere3Hopf::new(&[2, 3, 5]);
+    /// sgen.reseed(0);
+    /// let res = sgen.pop();
+    /// assert_approx_eq!(res[0], -0.22360679774997885);
+    /// assert_approx_eq!(res[1], 0.3872983346207417);
+    /// assert_approx_eq!(res[2], 0.44721359549995726);
+    /// assert_approx_eq!(res[3], -0.7745966692414837);
+    /// ```
     pub fn pop(&mut self) -> [f64; 4] {
         let phi = self.vdc0.pop() * TWO_PI; // map to [0, 2*pi];
         let psy = self.vdc1.pop() * TWO_PI; // map to [0, 2*pi];
@@ -679,6 +729,26 @@ impl HaltonN {
     /// the [`Sphere`] class, `pop()` returns the next point on the unit sphere as a
     /// `[f64; 3]`. And in the [`Sphere3Hopf`] class, `pop()` returns
     /// the next point on the 3-sphere using the Hopf fibration as a `[f64; 4]`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use lds_rs::HaltonN;
+    /// use approx_eq::assert_approx_eq;
+    ///
+    /// let mut hgen = HaltonN::new(&[2, 3, 5]);
+    /// let res = hgen.pop_vec();
+    /// assert_approx_eq!(res[0], 0.5);
+    /// assert_approx_eq!(res[1], 1.0 / 3.0);
+    /// assert_approx_eq!(res[2], 0.2);
+    ///
+    /// let mut hgen_reseed = HaltonN::new(&[2, 3, 5]);
+    /// hgen_reseed.reseed(0);
+    /// let res_reseed = hgen_reseed.pop_vec();
+    /// assert_approx_eq!(res_reseed[0], 0.5);
+    /// assert_approx_eq!(res_reseed[1], 1.0 / 3.0);
+    /// assert_approx_eq!(res_reseed[2], 0.2);
+    /// ```
     pub fn pop_vec(&mut self) -> Vec<f64> {
         self.vdcs.iter_mut().map(|vdc| vdc.pop()).collect()
     }

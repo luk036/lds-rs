@@ -42,6 +42,9 @@
 ///
 /// assert_eq!(vdc_i(10, 2, 2), 1);
 /// assert_eq!(vdc_i(10, 2, 3), 2);
+///
+/// let res = vdc_i(10, 2, 10);
+/// assert_eq!(res, 320);
 /// ```
 pub const fn vdc_i(k: usize, base: usize, scale: u32) -> usize {
     let mut res = 0;
@@ -126,6 +129,12 @@ impl VdCorput {
     ///
     /// let mut vd_corput = VdCorput::new(2, 10);
     /// assert_eq!(vd_corput.pop(), 512);
+    ///
+    /// let mut vgen = VdCorput::new(2, 10);
+    /// vgen.reseed(0);
+    /// assert_eq!(vgen.pop(), 512);
+    /// assert_eq!(vgen.pop(), 256);
+    /// assert_eq!(vgen.pop(), 768);
     /// ```
     pub fn pop(&mut self) -> usize {
         self.count += 1;
@@ -205,6 +214,25 @@ impl Halton {
     /// Returns:
     ///
     /// An array of two `usize` values is being returned.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use lds_rs::ilds::Halton;
+    ///
+    /// let mut hgen = Halton::new(&[2, 3], &[11, 7]);
+    /// hgen.reseed(0);
+    /// let result = hgen.pop();
+    ///
+    /// assert_eq!(result, [1024, 729]);
+    ///
+    /// let mut hgen = Halton::new(&[2, 3], &[11, 7]);
+    /// hgen.reseed(0);
+    /// let result = hgen.pop();
+    /// assert_eq!(result, [1024, 729]);
+    /// let result = hgen.pop();
+    /// assert_eq!(result, [512, 1458]);
+    /// ```
     pub fn pop(&mut self) -> [usize; 2] {
         [self.vdc0.pop(), self.vdc1.pop()]
     }
@@ -247,6 +275,20 @@ pub fn div_mod_3_u8(n: u8) -> (u8, u8) {
     }
 }
 
+/// # Examples
+///
+/// ```rust
+/// use lds_rs::ilds::div_mod_3_u8;
+///
+/// let (q, r) = div_mod_3_u8(10);
+/// assert_eq!(q, 3);
+/// assert_eq!(r, 1);
+///
+/// let (q, r) = div_mod_3_u8(12);
+/// assert_eq!(q, 4);
+/// assert_eq!(r, 0);
+/// ```
+
 pub fn div_mod_3_u16(n: u16) -> (u16, u16) {
     // Perform the iterations using the macro
     let (q1, rem1) = div_mod_3_iter!(n); // First iteration
@@ -269,6 +311,20 @@ pub fn div_mod_3_u16(n: u16) -> (u16, u16) {
         (quotient_sum, rem8) // Equivalent to quotient_sum and rem8[1:0]
     }
 }
+
+/// # Examples
+///
+/// ```rust
+/// use lds_rs::ilds::div_mod_3_u16;
+///
+/// let (q, r) = div_mod_3_u16(10000);
+/// assert_eq!(q, 3333);
+/// assert_eq!(r, 1);
+///
+/// let (q, r) = div_mod_3_u16(10002);
+/// assert_eq!(q, 3334);
+/// assert_eq!(r, 0);
+/// ```
 
 macro_rules! div_mod_7_iter {
     ($input:expr) => {{
@@ -296,6 +352,20 @@ pub fn div_mod_7_u8(n: u8) -> (u8, u8) {
     }
 }
 
+/// # Examples
+///
+/// ```rust
+/// use lds_rs::ilds::div_mod_7_u8;
+///
+/// let (q, r) = div_mod_7_u8(10);
+/// assert_eq!(q, 1);
+/// assert_eq!(r, 3);
+///
+/// let (q, r) = div_mod_7_u8(14);
+/// assert_eq!(q, 2);
+/// assert_eq!(r, 0);
+/// ```
+
 pub fn div_mod_7_u16(n: u16) -> (u16, u16) {
     // Perform the iterations using the macro
     let (q1, rem1) = div_mod_7_iter!(n); // First iteration
@@ -315,6 +385,20 @@ pub fn div_mod_7_u16(n: u16) -> (u16, u16) {
         (quotient_sum, rem5) // Equivalent to quotient_sum and rem5[1:0]
     }
 }
+
+/// # Examples
+///
+/// ```rust
+/// use lds_rs::ilds::div_mod_7_u16;
+///
+/// let (q, r) = div_mod_7_u16(10000);
+/// assert_eq!(q, 1428);
+/// assert_eq!(r, 4);
+///
+/// let (q, r) = div_mod_7_u16(14000);
+/// assert_eq!(q, 2000);
+/// assert_eq!(r, 0);
+/// ```
 
 #[cfg(test)]
 mod tests {
