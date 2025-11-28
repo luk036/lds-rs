@@ -3,11 +3,9 @@
 //!
 //! This code implements two low-discrepancy sequence generators: the Van der Corput sequence and the Halton sequence (specific for integer output). These sequences are used to generate evenly distributed points in a space, which can be useful for various applications like sampling, optimization, or numerical integration.
 //!
-//! The code defines three main components: a function called vdc_i, and two classes named VdCorput and Halton.
+//! The code defines two classes named VdCorput and Halton.
 //!
-//! The vdc_i function is the core of the Van der Corput sequence generation. It takes an integer k, a base (default 2), and a scale (default 10) as inputs. It converts the number k from the given base to a decimal number, using the specified scale for integer output. This function is used to generate individual elements of the Van der Corput sequence.
-//!
-//! The VdCorput class is a wrapper around the vdc_i function. It keeps track of the current count and allows you to generate successive elements of the Van der Corput sequence by calling its pop method. You can also reset the sequence to a specific starting point using the reseed method.
+//! The VdCorput class keeps track of the current count and allows you to generate successive elements of the Van der Corput sequence by calling its pop method. You can also reset the sequence to a specific starting point using the reseed method.
 //!
 //! The Halton class generates points in a 2-dimensional space using two Van der Corput sequences with different bases. It creates two VdCorput objects internally and uses them to generate pairs of numbers. The pop method of the Halton class returns a list of two integers, representing a point in 2D space.
 //!
@@ -18,46 +16,6 @@
 //! The code doesn't take any direct input from the user. Instead, it provides classes and functions that can be used in other programs to generate these sequences. The output of these generators are individual numbers (for Van der Corput) or pairs of numbers (for Halton) that form the respective sequences.
 //!
 //! This code is particularly useful for applications that need well-distributed random-like numbers, but with more uniformity than typical pseudo-random number generators provide. It's a building block that can be used in more complex algorithms and simulations.
-
-/// The function `vdc_i` calculates the van der Corput sequence for a given base and scale.
-///
-/// Arguments:
-///
-/// * `k`: The parameter `k` represents the number that we want to convert to variable digit code (VDC)
-///   representation.
-/// * `base`: The `base` parameter represents the base of the number system being used. It determines
-///   the number of unique digits that can be used to represent numbers. For example, in base 10, the
-///   digits range from 0 to 9.
-/// * `scale`: The `scale` parameter in the `vdc_i` function represents the power to which the `base` is
-///   raised. It determines the number of digits in the resulting VDC (Van der Corput) number.
-///
-/// Returns:
-///
-/// The function `vdc_i` returns an unsigned integer value of type `usize`.
-///
-/// # Examples
-///
-/// ```rust
-/// use lds_rs::ilds::vdc_i;
-///
-/// assert_eq!(vdc_i(10, 2, 2), 1);
-/// assert_eq!(vdc_i(10, 2, 3), 2);
-///
-/// let res = vdc_i(10, 2, 10);
-/// assert_eq!(res, 320);
-/// ```
-pub const fn vdc_i(k: usize, base: usize, scale: u32) -> usize {
-    let mut res = 0;
-    let mut factor = base.pow(scale);
-    let mut k = k;
-    while k != 0 {
-        let remainder = k % base;
-        factor /= base;
-        k /= base;
-        res += remainder * factor;
-    }
-    res
-}
 
 /// The `VdCorput` struct is a generator for Van der Corput sequences.
 ///
@@ -87,7 +45,7 @@ pub const fn vdc_i(k: usize, base: usize, scale: u32) -> usize {
 pub struct VdCorput {
     count: usize,
     base: usize,
-    scale: u32,
+    factor: usize, // Stored to base**scale
 }
 
 impl VdCorput {
@@ -109,15 +67,16 @@ impl VdCorput {
         VdCorput {
             count: 0,
             base,
-            scale,
+            // Pre-calculate factor
+            factor: base.pow(scale),
         }
     }
 
     /// Returns the pop of this [`VdCorput`].
     ///
     /// The `pop` method of the [`VdCorput`] struct returns the next element in the Van der Corput
-    /// sequence. It increments the `count` property of the struct and uses the `vdc_i` function to
-    /// calculate the corresponding Van der Corput value based on the current count, base, and scale. In
+    /// sequence. It increments the `count` property of the struct and
+    /// calculates the corresponding Van der Corput value based on the current count, base, and scale. In
     /// the example provided, a `VdCorput` instance is created with a base of 2 and a scale of 10. The
     /// `pop` method is then called, which returns the Van der Corput value for the current count (which
     /// is initially 0). In this case, the returned value is 512.
@@ -138,7 +97,19 @@ impl VdCorput {
     /// ```
     pub fn pop(&mut self) -> usize {
         self.count += 1;
-        vdc_i(self.count, self.base, self.scale)
+
+        let mut k = self.count;
+        let base = self.base;
+        let mut vdc: usize = 0;
+        let mut factor = self.factor; // Start with the pre-calculated factor
+
+        while k != 0 {
+            factor /= base;
+            let remainder = k % base;
+            k /= base;
+            vdc += remainder * factor;
+        }
+        vdc
     }
 
     /// The below code is a Rust function called `reseed` that is used to reset the state of a sequence
@@ -400,18 +371,6 @@ pub fn div_mod_7_u16(n: u16) -> (u16, u16) {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_vdc() {
-        let base = 2;
-        let scale = 10;
-        let k = 10;
-        let res = vdc_i(k, base, scale);
-        assert_eq!(res, 320);
-        assert_eq!(vdc_i(1, 2, 10), 512);
-        assert_eq!(vdc_i(2, 2, 10), 256);
-        assert_eq!(vdc_i(3, 2, 10), 768);
-    }
 
     #[test]
     fn test_vdcorput() {
