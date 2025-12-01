@@ -13,5 +13,5 @@ license = "MIT OR Apache-2.0"
 approx_eq = "0.1.8"
 
 [dependencies]
-tracing = "0.1.41"
+tracing = "0.1.43"
 tracing-subscriber = "0.3.20"
