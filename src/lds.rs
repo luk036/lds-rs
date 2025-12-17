@@ -34,7 +34,7 @@ const TWO_PI: f64 = std::f64::consts::TAU;
 /// # Examples
 ///
 /// ```rust
-/// use lds_rs::lds::vdc;
+/// use lds_gen::lds::vdc;
 /// use approx_eq::assert_approx_eq;
 ///
 /// assert_approx_eq!(vdc(11, 2), 0.8125);
@@ -65,7 +65,7 @@ pub fn vdc(k: usize, base: usize) -> f64 {
 /// # Examples
 ///
 /// ```rust
-/// use lds_rs::VdCorput;
+/// use lds_gen::VdCorput;
 ///
 /// let mut vgen = VdCorput::new(2);
 /// vgen.reseed(10);
@@ -117,7 +117,7 @@ impl VdCorput {
     /// # Examples
     ///
     /// ```rust
-    /// use lds_rs::lds::VdCorput;
+    /// use lds_gen::lds::VdCorput;
     /// use approx_eq::assert_approx_eq;
     ///
     /// let mut vd_corput = VdCorput::new(2);
@@ -167,7 +167,7 @@ impl VdCorput {
 /// # Examples
 ///
 /// ```
-/// use lds_rs::Halton;
+/// use lds_gen::Halton;
 ///
 /// let mut hgen = Halton::new(&[2, 3]);
 /// hgen.reseed(10);
@@ -220,7 +220,7 @@ impl Halton {
     /// # Examples
     ///
     /// ```
-    /// use lds_rs::lds::Halton;
+    /// use lds_gen::lds::Halton;
     /// use approx_eq::assert_approx_eq;
     ///
     /// let mut halton = Halton::new(&[2, 5]);
@@ -263,7 +263,7 @@ impl Halton {
 /// # Examples
 ///
 /// ```
-/// use lds_rs::Circle;
+/// use lds_gen::Circle;
 ///
 /// let mut cgen = Circle::new(2);
 /// cgen.reseed(1);
@@ -307,7 +307,7 @@ impl Circle {
     /// # Examples
     ///
     /// ```
-    /// use lds_rs::lds::Circle;
+    /// use lds_gen::lds::Circle;
     /// use approx_eq::assert_approx_eq;
     ///
     /// let mut circle = Circle::new(2);
@@ -355,7 +355,7 @@ impl Circle {
 /// # Examples
 ///
 /// ```
-/// use lds_rs::Disk;
+/// use lds_gen::Disk;
 /// use approx_eq::assert_approx_eq;
 ///
 /// let mut dgen = Disk::new(&[2, 3]);
@@ -409,7 +409,7 @@ impl Disk {
     /// # Examples
     ///
     /// ```
-    /// use lds_rs::lds::Disk;
+    /// use lds_gen::lds::Disk;
     /// use approx_eq::assert_approx_eq;
     ///
     /// let mut dgen = Disk::new(&[2, 3]);
@@ -454,7 +454,7 @@ impl Disk {
 /// # Examples
 ///
 /// ```
-/// use lds_rs::Sphere;
+/// use lds_gen::Sphere;
 ///
 /// let mut sgen = Sphere::new(&[2, 3]);
 /// sgen.reseed(1);
@@ -501,7 +501,7 @@ impl Sphere {
     /// # Examples
     ///
     /// ```
-    /// use lds_rs::lds::Sphere;
+    /// use lds_gen::lds::Sphere;
     /// use approx_eq::assert_approx_eq;
     ///
     /// let mut sphere = Sphere::new(&[2, 3]);
@@ -564,7 +564,7 @@ impl Sphere {
 /// # Examples
 ///
 /// ```
-/// use lds_rs::Sphere3Hopf;
+/// use lds_gen::Sphere3Hopf;
 /// use approx_eq::assert_approx_eq;
 ///
 /// let mut sgen = Sphere3Hopf::new(&[2, 3, 5]);
@@ -618,7 +618,7 @@ impl Sphere3Hopf {
     /// # Examples
     ///
     /// ```
-    /// use lds_rs::Sphere3Hopf;
+    /// use lds_gen::Sphere3Hopf;
     /// use approx_eq::assert_approx_eq;
     ///
     /// let mut sgen = Sphere3Hopf::new(&[2, 3, 5]);
@@ -684,7 +684,7 @@ pub struct HaltonN {
 /// # Examples
 ///
 /// ```
-/// use lds_rs::HaltonN;
+/// use lds_gen::HaltonN;
 /// use approx_eq::assert_approx_eq;
 ///
 /// let mut hgen = HaltonN::new(&[2, 3, 5, 7, 11]);
@@ -733,7 +733,7 @@ impl HaltonN {
     /// # Examples
     ///
     /// ```
-    /// use lds_rs::HaltonN;
+    /// use lds_gen::HaltonN;
     /// use approx_eq::assert_approx_eq;
     ///
     /// let mut hgen = HaltonN::new(&[2, 3, 5]);
