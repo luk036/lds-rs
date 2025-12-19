@@ -135,7 +135,7 @@ fn get_tp(n: usize) -> Vec<f64> {
 }
 
 /// Base trait for sphere generators
-pub trait SphereGen {
+pub trait SphereGen: Send {
     /// Generates and returns a vector of values
     fn pop(&mut self) -> Vec<f64>;
 

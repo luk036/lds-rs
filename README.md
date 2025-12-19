@@ -10,6 +10,8 @@
 
 This library provides a set of low-discrepancy sequence generators that create sequences of numbers that are more evenly distributed than random numbers. These sequences are particularly useful in various fields such as computer graphics, numerical integration, and Monte Carlo simulations.
 
+All sequence generators are thread-safe, using atomic operations for internal state management, making them safe to use in concurrent environments.
+
 ## Features
 
 - **Van der Corput sequence**: Base implementation for 1D sequences
@@ -23,6 +25,7 @@ This library provides a set of low-discrepancy sequence generators that create s
   - `Sphere3`: Points on 3-sphere (4D)
   - `SphereN`: Points on n-sphere for arbitrary dimensions
 - **Integer sequences**: Integer versions of Van der Corput and Halton sequences
+- **Thread-safe**: All generators use atomic operations for safe concurrent access
 - **Prime table**: First 1000 prime numbers for use as sequence bases
 
 ## Installation
@@ -87,6 +90,8 @@ let point_n = sgen_n.pop();
 println!("n-sphere point: {:?}", point_n); // 5D point on unit 4-sphere
 ```
 
+The sphere generators use thread-safe lazy initialization and caching for optimal performance in concurrent environments.
+
 ### Integer Sequences
 
 ```rust
@@ -104,28 +109,57 @@ let int_point = ihalton.pop();
 println!("Integer point: {:?}", int_point); // [1024, 729]
 ```
 
+### Thread-safe Usage
+
+All sequence generators are thread-safe and can be safely shared across threads:
+
+```rust
+use std::sync::Arc;
+use std::thread;
+use lds_gen::Halton;
+
+let halton = Arc::new(Halton::new([2, 3]));
+halton.reseed(0);
+
+let mut handles = vec![];
+
+for _ in 0..4 {
+    let halton_clone = Arc::clone(&halton);
+    let handle = thread::spawn(move || {
+        // Each thread safely generates points
+        let point = halton_clone.pop();
+        println!("Thread point: {:?}", point);
+    });
+    handles.push(handle);
+}
+
+for handle in handles {
+    handle.join().unwrap();
+}
+```
+
 ## API Reference
 
 ### Core Types
 
-- `VdCorput`: Van der Corput sequence generator
-- `Halton`: 2D Halton sequence generator
-- `Circle`: Unit circle sequence generator
-- `Disk`: Unit disk sequence generator
-- `Sphere`: Unit sphere sequence generator
-- `Sphere3Hopf`: 3-sphere sequence generator using Hopf coordinates
-- `HaltonN`: N-dimensional Halton sequence generator
+- `VdCorput`: Van der Corput sequence generator (thread-safe)
+- `Halton`: 2D Halton sequence generator (thread-safe)
+- `Circle`: Unit circle sequence generator (thread-safe)
+- `Disk`: Unit disk sequence generator (thread-safe)
+- `Sphere`: Unit sphere sequence generator (thread-safe)
+- `Sphere3Hopf`: 3-sphere sequence generator using Hopf coordinates (thread-safe)
+- `HaltonN`: N-dimensional Halton sequence generator (thread-safe)
 
 ### N-Dimensional Sphere Types (in `sphere_n` module)
 
-- `sphere_n::SphereGen`: Trait for sphere generators
-- `sphere_n::Sphere3`: 3-sphere (4D) sequence generator
-- `sphere_n::SphereN`: N-sphere sequence generator for arbitrary dimensions
+- `sphere_n::SphereGen`: Thread-safe trait for sphere generators (implements Send)
+- `sphere_n::Sphere3`: Thread-safe 3-sphere (4D) sequence generator
+- `sphere_n::SphereN`: Thread-safe N-sphere sequence generator for arbitrary dimensions
 
 ### Integer Types (in `ilds` module)
 
-- `ilds::VdCorput`: Integer Van der Corput sequence generator
-- `ilds::Halton`: Integer 2D Halton sequence generator
+- `ilds::VdCorput`: Integer Van der Corput sequence generator (thread-safe)
+- `ilds::Halton`: Integer 2D Halton sequence generator (thread-safe)
 
 ### Constants
 
