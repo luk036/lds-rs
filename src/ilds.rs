@@ -6,6 +6,8 @@
 //! which can be useful for various applications like sampling, optimization,
 //! or numerical integration.
 
+use std::sync::atomic::{AtomicU32, Ordering};
+
 /// Integer Van der Corput sequence generator
 ///
 /// Generates integer values of the Van der Corput sequence with a specified scale.
@@ -22,7 +24,7 @@ pub struct VdCorput {
     base: u32,
     #[allow(dead_code)] // Used for documentation and API consistency
     scale: u32,
-    count: u32,
+    count: AtomicU32,
     factor: u32,
 }
 
@@ -38,7 +40,7 @@ impl VdCorput {
         Self {
             base,
             scale,
-            count: 0,
+            count: AtomicU32::new(0),
             factor,
         }
     }
@@ -48,8 +50,8 @@ impl VdCorput {
     /// Increments the count and calculates the next integer value
     /// in the Van der Corput sequence.
     pub fn pop(&mut self) -> u32 {
-        self.count += 1;
-        let mut k = self.count;
+        let k = self.count.fetch_add(1, Ordering::Relaxed) + 1;
+        let mut k = k;
         let mut vdc = 0;
         let mut factor = self.factor;
 
@@ -68,7 +70,7 @@ impl VdCorput {
     ///
     /// * `seed` - The seed value that determines the starting point of the sequence generation
     pub fn reseed(&mut self, seed: u32) {
-        self.count = seed;
+        self.count.store(seed, Ordering::Relaxed);
     }
 }
 

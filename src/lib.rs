@@ -35,6 +35,7 @@
 //! tasks like sampling, integration, and optimization.
 
 use std::f64::consts::PI;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 /// Constant for 2π
 pub const TWO_PI: f64 = 2.0 * PI;
@@ -86,7 +87,7 @@ pub fn vdc(k: u32, base: u32) -> f64 {
 /// assert_eq!(vgen.pop(), 0.75);
 /// ```
 pub struct VdCorput {
-    count: u32,
+    count: AtomicU32,
     base: u32,
     rev_lst: Vec<f64>,
 }
@@ -108,7 +109,7 @@ impl VdCorput {
         }
 
         Self {
-            count: 0,
+            count: AtomicU32::new(0),
             base,
             rev_lst,
         }
@@ -119,8 +120,8 @@ impl VdCorput {
     /// Increments the count and calculates the Van der Corput sequence value
     /// for that count and base.
     pub fn pop(&mut self) -> f64 {
-        self.count += 1; // ignore 0
-        let mut k = self.count;
+        let k = self.count.fetch_add(1, Ordering::Relaxed) + 1; // ignore 0
+        let mut k = k;
         let mut res = 0.0;
         let mut i = 0;
 
@@ -141,7 +142,7 @@ impl VdCorput {
     ///
     /// * `seed` - The seed value that determines the starting point of the sequence generation
     pub fn reseed(&mut self, seed: u32) {
-        self.count = seed;
+        self.count.store(seed, Ordering::Relaxed);
     }
 }
 
