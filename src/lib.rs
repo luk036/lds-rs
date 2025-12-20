@@ -703,4 +703,276 @@ mod tests {
         // Check a prime near the end
         assert_eq!(PRIME_TABLE[999], 7919);
     }
+
+    #[test]
+    fn test_vdcorput_atomic_operations() {
+        let mut vgen = VdCorput::new(2);
+        vgen.reseed(0);
+        
+        // Test that fetch_add returns the previous value
+        let old_value = vgen.count.fetch_add(5, Ordering::Relaxed);
+        assert_eq!(old_value, 0);
+        
+        // Verify the count was updated
+        assert_eq!(vgen.count.load(Ordering::Relaxed), 5);
+        
+        // Test store operation
+        vgen.count.store(10, Ordering::Relaxed);
+        assert_eq!(vgen.count.load(Ordering::Relaxed), 10);
+    }
+
+    #[test]
+    fn test_vdcorput_thread_safety() {
+        use std::sync::{Arc, Mutex};
+        use std::thread;
+
+        let vgen = Arc::new(Mutex::new(VdCorput::new(2)));
+        let mut handles = vec![];
+        let results = Arc::new(Mutex::new(Vec::new()));
+
+        // Spawn multiple threads that each generate a few values
+        for _ in 0..4 {
+            let vgen_clone = Arc::clone(&vgen);
+            let results_clone = Arc::clone(&results);
+            
+            let handle = thread::spawn(move || {
+                let mut local_values = Vec::new();
+                for _ in 0..5 {
+                    let mut generator = vgen_clone.lock().unwrap();
+                    local_values.push(generator.pop());
+                }
+                let mut results = results_clone.lock().unwrap();
+                results.push(local_values);
+            });
+            
+            handles.push(handle);
+        }
+
+        // Wait for all threads to complete
+        for handle in handles {
+            handle.join().unwrap();
+        }
+
+        // Verify we got the expected number of values
+        let results = results.lock().unwrap();
+        assert_eq!(results.len(), 4);
+        for thread_results in results.iter() {
+            assert_eq!(thread_results.len(), 5);
+        }
+    }
+
+    #[test]
+    fn test_vdcorput_concurrent_access() {
+        use std::sync::Arc;
+        use std::thread;
+
+        let vgen = Arc::new(VdCorput::new(2));
+        let mut handles = vec![];
+
+        // Test concurrent access with atomic operations
+        for i in 0..8 {
+            let vgen_clone = Arc::clone(&vgen);
+            let handle = thread::spawn(move || {
+                // Each thread attempts to reseed with its thread ID
+                // This tests atomic store operations
+                vgen_clone.count.store(i as u32, Ordering::Relaxed);
+                
+                // Read the value back
+                vgen_clone.count.load(Ordering::Relaxed)
+            });
+            
+            handles.push(handle);
+        }
+
+        // Collect results
+        let mut results = vec![];
+        for handle in handles {
+            results.push(handle.join().unwrap());
+        }
+
+        // Verify all operations completed without panicking
+        assert_eq!(results.len(), 8);
+        
+        // The final value should be one of the thread IDs (due to race condition)
+        let final_value = vgen.count.load(Ordering::Relaxed);
+        assert!(final_value < 8);
+    }
+
+    #[test]
+    fn test_vdcorput_memory_ordering() {
+        let vgen = VdCorput::new(2);
+        
+        // Test different valid memory orderings
+        vgen.count.store(42, Ordering::SeqCst);
+        assert_eq!(vgen.count.load(Ordering::SeqCst), 42);
+        
+        vgen.count.store(100, Ordering::Release);
+        assert_eq!(vgen.count.load(Ordering::Acquire), 100);
+        
+        vgen.count.store(200, Ordering::Relaxed);
+        assert_eq!(vgen.count.load(Ordering::Relaxed), 200);
+        
+        let old = vgen.count.fetch_add(10, Ordering::AcqRel);
+        assert_eq!(old, 200);
+        assert_eq!(vgen.count.load(Ordering::Acquire), 210);
+    }
+
+    #[test]
+    fn test_vdcorput_compare_exchange() {
+        let vgen = VdCorput::new(2);
+        vgen.count.store(5, Ordering::SeqCst);
+        
+        // Successful compare_exchange
+        let result = vgen.count.compare_exchange(
+            5, 10, 
+            Ordering::SeqCst, Ordering::SeqCst
+        );
+        assert_eq!(result, Ok(5));
+        assert_eq!(vgen.count.load(Ordering::SeqCst), 10);
+        
+        // Failed compare_exchange
+        let result = vgen.count.compare_exchange(
+            5, 15, 
+            Ordering::SeqCst, Ordering::SeqCst
+        );
+        assert_eq!(result, Err(10));
+        assert_eq!(vgen.count.load(Ordering::SeqCst), 10);
+    }
+
+    #[test]
+    fn test_vdcorput_direct_multithreaded_usage() {
+        use std::sync::{Arc, Mutex};
+        use std::thread;
+
+        // Create a shared VdCorput instance wrapped in Arc and Mutex
+        // This allows multiple threads to safely mutate the same generator
+        let vgen = Arc::new(Mutex::new(VdCorput::new(2)));
+        vgen.lock().unwrap().reseed(0);
+        
+        let mut handles = vec![];
+        let results = Arc::new(Mutex::new(Vec::new()));
+
+        // Spawn multiple threads that share the same VdCorput instance
+        for thread_id in 0..4 {
+            let vgen_clone = Arc::clone(&vgen);
+            let results_clone = Arc::clone(&results);
+            
+            let handle = thread::spawn(move || {
+                let mut local_values = Vec::new();
+                
+                // Each thread generates 5 values from the shared generator
+                for _ in 0..5 {
+                    let mut generator = vgen_clone.lock().unwrap();
+                    local_values.push(generator.pop());
+                }
+                
+                let mut results = results_clone.lock().unwrap();
+                results.push((thread_id, local_values));
+            });
+            
+            handles.push(handle);
+        }
+
+        // Wait for all threads to complete
+        for handle in handles {
+            handle.join().unwrap();
+        }
+
+        // Verify results
+        let results = results.lock().unwrap();
+        assert_eq!(results.len(), 4);
+        
+        // Each thread should have generated 5 values
+        for (thread_id, values) in results.iter() {
+            assert_eq!(values.len(), 5);
+            println!("Thread {} generated: {:?}", thread_id, values);
+        }
+        
+        // Verify that all generated values are valid VdCorput sequence values
+        for (_, values) in results.iter() {
+            for &value in values {
+                assert!(value >= 0.0 && value < 1.0);
+            }
+        }
+    }
+
+    #[test]
+    fn test_vdcorput_send_sync_traits() {
+        // This test verifies that VdCorput implements Send and Sync
+        fn is_send<T: Send>() {}
+        fn is_sync<T: Sync>() {}
+        
+        is_send::<VdCorput>();
+        is_sync::<VdCorput>();
+        
+        // Verify we can share VdCorput across threads for read-only access
+        use std::sync::Arc;
+        use std::thread;
+        
+        let vgen = Arc::new(VdCorput::new(3));
+        let mut handles = vec![];
+        
+        // Create multiple threads that read from the same VdCorput
+        for _ in 0..4 {
+            let vgen_clone = Arc::clone(&vgen);
+            let handle = thread::spawn(move || {
+                // Read access to fields is fine without synchronization
+                let base = vgen_clone.base;
+                assert_eq!(base, 3);
+                
+                // Atomic operations work without mutex
+                let old_value = vgen_clone.count.fetch_add(1, Ordering::Relaxed);
+                assert!(old_value < 100); // Just a sanity check
+                
+                // We can read the rev_lst without synchronization since it's immutable after creation
+                assert_eq!(vgen_clone.rev_lst.len(), 64);
+            });
+            handles.push(handle);
+        }
+        
+        for handle in handles {
+            handle.join().unwrap();
+        }
+    }
+
+    #[test]
+    fn test_vdcorput_clone_for_multithreading() {
+        use std::thread;
+        
+        // Create separate instances for each thread (no shared state)
+        let base = 2;
+        let mut handles = vec![];
+        
+        for thread_id in 0..4 {
+            let handle = thread::spawn(move || {
+                // Each thread creates its own VdCorput instance
+                let mut vgen = VdCorput::new(base);
+                vgen.reseed(thread_id as u32 * 10); // Different seed for each thread
+                
+                let mut values = Vec::new();
+                for _ in 0..5 {
+                    values.push(vgen.pop());
+                }
+                
+                (thread_id, values)
+            });
+            
+            handles.push(handle);
+        }
+        
+        // Collect results
+        let mut results = vec![];
+        for handle in handles {
+            results.push(handle.join().unwrap());
+        }
+        
+        // Verify each thread generated valid values
+        for (thread_id, values) in results {
+            assert_eq!(values.len(), 5);
+            for &value in &values {
+                assert!(value >= 0.0 && value < 1.0);
+            }
+            println!("Thread {} generated: {:?}", thread_id, values);
+        }
+    }
 }

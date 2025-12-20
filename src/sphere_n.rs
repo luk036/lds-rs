@@ -135,7 +135,7 @@ fn get_tp(n: usize) -> Vec<f64> {
 }
 
 /// Base trait for sphere generators
-pub trait SphereGen: Send {
+pub trait SphereGen: Send + Sync {
     /// Generates and returns a vector of values
     fn pop(&mut self) -> Vec<f64>;
 
@@ -542,5 +542,237 @@ mod tests {
     #[should_panic(expected = "SphereN requires at least 3 bases")]
     fn test_spheren_insufficient_bases() {
         SphereN::new(&[2, 3]);
+    }
+
+    #[test]
+    fn test_sphere_tables_thread_safety() {
+        use std::sync::{Arc, Barrier};
+        use std::thread;
+
+        let num_threads = 8;
+        let barrier = Arc::new(Barrier::new(num_threads));
+        let mut handles = vec![];
+
+        for _ in 0..num_threads {
+            let barrier_clone = Arc::clone(&barrier);
+            let handle = thread::spawn(move || {
+                // Wait for all threads to be ready
+                barrier_clone.wait();
+                
+                // All threads access SPHERE_TABLES simultaneously
+                let tables = SPHERE_TABLES.get();
+                assert_eq!(tables.0.len(), 300); // x table
+                assert_eq!(tables.1.len(), 300); // neg_cosine table
+                assert_eq!(tables.2.len(), 300); // sine table
+                assert_eq!(tables.3.len(), 300); // f2 table
+                assert_eq!(tables.4, std::f64::consts::PI / 2.0); // half_pi
+            });
+            handles.push(handle);
+        }
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+    }
+
+    #[test]
+    fn test_get_tp_cache_thread_safety() {
+        use std::sync::{Arc, Barrier};
+        use std::thread;
+
+        let num_threads = 8;
+        let barrier = Arc::new(Barrier::new(num_threads));
+        let mut handles = vec![];
+
+        for thread_id in 0..num_threads {
+            let barrier_clone = Arc::clone(&barrier);
+            let handle = thread::spawn(move || {
+                barrier_clone.wait();
+                
+                // Each thread requests different tp values
+                let n = thread_id % 5; // Request tp values 0-4
+                let tp = get_tp(n);
+                
+                // Verify the returned tp values
+                assert_eq!(tp.len(), 300);
+                
+                // For n=0, tp is x which ranges from 0 to PI
+                // For n=1, tp is neg_cosine which ranges from -1 to 1
+                // For n>1, tp can have different ranges
+                if n == 0 {
+                    assert!(tp[0] >= 0.0 && tp[0] <= std::f64::consts::PI);
+                    assert!(tp[tp.len() - 1] >= 0.0 && tp[tp.len() - 1] <= std::f64::consts::PI);
+                } else if n == 1 {
+                    assert!(tp[0] >= -1.0 && tp[0] <= 1.0);
+                    assert!(tp[tp.len() - 1] >= -1.0 && tp[tp.len() - 1] <= 1.0);
+                }
+                // For n>1, we just check that the values are finite
+                for &val in &tp {
+                    assert!(val.is_finite());
+                }
+            });
+            handles.push(handle);
+        }
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+    }
+
+    #[test]
+    fn test_sphere3_concurrent_access() {
+        use std::sync::{Arc, Mutex};
+        use std::thread;
+
+        let sgen = Arc::new(Mutex::new(Sphere3::new(&[2, 3, 5])));
+        sgen.lock().unwrap().reseed(0);
+        
+        let mut handles = vec![];
+        let results = Arc::new(Mutex::new(Vec::new()));
+
+        for _ in 0..4 {
+            let sgen_clone = Arc::clone(&sgen);
+            let results_clone = Arc::clone(&results);
+            
+            let handle = thread::spawn(move || {
+                let mut local_points = Vec::new();
+                for _ in 0..5 {
+                    let mut generator = sgen_clone.lock().unwrap();
+                    let point = generator.pop();
+                    local_points.push(point);
+                }
+                let mut results = results_clone.lock().unwrap();
+                results.push(local_points);
+            });
+            
+            handles.push(handle);
+        }
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+
+        let results = results.lock().unwrap();
+        assert_eq!(results.len(), 4);
+        
+        for thread_results in results.iter() {
+            assert_eq!(thread_results.len(), 5);
+            for point in thread_results {
+                assert_eq!(point.len(), 4);
+                let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
+                assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+            }
+        }
+    }
+
+    #[test]
+    fn test_spheren_concurrent_access() {
+        use std::sync::{Arc, Mutex};
+        use std::thread;
+
+        let sgen = Arc::new(Mutex::new(SphereN::new(&[2, 3, 5, 7, 11])));
+        sgen.lock().unwrap().reseed(0);
+        
+        let mut handles = vec![];
+        let results = Arc::new(Mutex::new(Vec::new()));
+
+        for _ in 0..4 {
+            let sgen_clone = Arc::clone(&sgen);
+            let results_clone = Arc::clone(&results);
+            
+            let handle = thread::spawn(move || {
+                let mut local_points = Vec::new();
+                for _ in 0..3 {
+                    let mut generator = sgen_clone.lock().unwrap();
+                    let point = generator.pop();
+                    local_points.push(point);
+                }
+                let mut results = results_clone.lock().unwrap();
+                results.push(local_points);
+            });
+            
+            handles.push(handle);
+        }
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+
+        let results = results.lock().unwrap();
+        assert_eq!(results.len(), 4);
+        
+        for thread_results in results.iter() {
+            assert_eq!(thread_results.len(), 3);
+            for point in thread_results {
+                assert_eq!(point.len(), 6);
+                let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
+                assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+            }
+        }
+    }
+
+    #[test]
+    fn test_multiple_sphere_instances_concurrent() {
+        use std::sync::{Arc, Barrier};
+        use std::thread;
+
+        let num_threads = 6;
+        let barrier = Arc::new(Barrier::new(num_threads));
+        let mut handles = vec![];
+
+        for thread_id in 0..num_threads {
+            let barrier_clone = Arc::clone(&barrier);
+            let handle = thread::spawn(move || {
+                barrier_clone.wait();
+                
+                // Each thread creates its own sphere generator
+                let bases = match thread_id % 3 {
+                    0 => &[2, 3, 5][..],
+                    1 => &[3, 5, 7][..],
+                    _ => &[5, 7, 11][..],
+                };
+                
+                let mut sgen: Box<dyn SphereGen> = if thread_id < 3 {
+                    Box::new(Sphere3::new(bases))
+                } else {
+                    Box::new(SphereN::new(&[bases[0], bases[1], bases[2], 13]))
+                };
+                
+                sgen.reseed(thread_id as u32);
+                
+                // Generate points
+                for _ in 0..5 {
+                    let point = sgen.pop();
+                    let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
+                    assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+                }
+            });
+            
+            handles.push(handle);
+        }
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+    }
+
+    #[test]
+    fn test_sphere_trait_send_sync() {
+        // This test verifies that SphereGen trait objects are Send + Sync
+        fn is_send_sync<T: Send + Sync>() {}
+        
+        is_send_sync::<Sphere3>();
+        is_send_sync::<SphereN>();
+        
+        // Verify trait objects are Send
+        let mut sgen3: Box<dyn SphereGen> = Box::new(Sphere3::new(&[2, 3, 5]));
+        let mut sgen_n: Box<dyn SphereGen> = Box::new(SphereN::new(&[2, 3, 5, 7]));
+        
+        // These operations should compile if Send is implemented
+        sgen3.reseed(0);
+        sgen_n.reseed(0);
+        
+        let _point3 = sgen3.pop();
+        let _point_n = sgen_n.pop();
     }
 }
