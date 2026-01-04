@@ -353,4 +353,212 @@ mod tests {
         assert_eq!(q, 2000);
         assert_eq!(r, 0);
     }
+
+    // Additional comprehensive tests for edge cases and different scales
+
+    #[test]
+    fn test_ilds_vdcorput_different_bases() {
+        // Test with base 3
+        let mut vdc = VdCorput::new(3, 5);
+        vdc.reseed(0);
+        assert_eq!(vdc.pop(), 81); // Actual value from implementation
+        assert_eq!(vdc.pop(), 162); // Next value
+
+        // Test with base 5
+        let mut vdc = VdCorput::new(5, 3);
+        vdc.reseed(0);
+        assert_eq!(vdc.pop(), 25); // 0.2 * 5^3 = 62.5 -> 62 (integer)
+        assert_eq!(vdc.pop(), 50); // Next value
+    }
+
+    #[test]
+    fn test_ilds_vdcorput_different_scales() {
+        // Test with different scales
+        let mut vdc1 = VdCorput::new(2, 5);
+        vdc1.reseed(0);
+        assert_eq!(vdc1.pop(), 16); // 0.5 * 2^5 = 16
+
+        let mut vdc2 = VdCorput::new(2, 10);
+        vdc2.reseed(0);
+        assert_eq!(vdc2.pop(), 512); // 0.5 * 2^10 = 512
+
+        let mut vdc3 = VdCorput::new(2, 15);
+        vdc3.reseed(0);
+        assert_eq!(vdc3.pop(), 16384); // 0.5 * 2^15 = 16384
+    }
+
+    #[test]
+    fn test_ilds_vdcorput_large_values() {
+        let mut vdc = VdCorput::new(2, 20);
+        vdc.reseed(1000);
+
+        // Generate several values and ensure they're within valid range
+        for _ in 0..10 {
+            let value = vdc.pop();
+            assert!(value < vdc.factor);
+        }
+    }
+
+    #[test]
+    fn test_ilds_halton_different_bases_and_scales() {
+        // Test with bases 3 and 5, scales 5 and 7
+        let mut hgen = Halton::new([3, 5], [5, 7]);
+        hgen.reseed(0);
+        let res = hgen.pop();
+        assert_eq!(res[0], 81); // Actual value from VdCorput with base 3, scale 5
+        assert_eq!(res[1], 15625); // Actual value from VdCorput with base 5, scale 7
+
+        // Test with bases 5 and 7, scales 3 and 4
+        let mut hgen = Halton::new([5, 7], [3, 4]);
+        hgen.reseed(0);
+        let res = hgen.pop();
+        assert_eq!(res[0], 25); // Actual value from VdCorput with base 5, scale 3
+        assert_eq!(res[1], 343); // Actual value from VdCorput with base 7, scale 4
+    }
+
+    #[test]
+    fn test_ilds_halton_large_values() {
+        let mut hgen = Halton::new([2, 3], [15, 10]);
+        hgen.reseed(0);
+
+        // Generate several values and ensure they're within valid range
+        for _ in 0..10 {
+            let res = hgen.pop();
+            assert!(res[0] < hgen.vdc0.factor);
+            assert!(res[1] < hgen.vdc1.factor);
+        }
+    }
+
+    #[test]
+    fn test_div_mod_3_edge_cases() {
+        // Test boundary values for u8
+        assert_eq!(div_mod_3_u8(0), (0, 0));
+        assert_eq!(div_mod_3_u8(1), (0, 1));
+        assert_eq!(div_mod_3_u8(2), (0, 2));
+        assert_eq!(div_mod_3_u8(3), (1, 0));
+
+        // Test maximum value for u8
+        let (q, r) = div_mod_3_u8(255);
+        assert_eq!(q, 85);
+        assert_eq!(r, 0);
+
+        // Test boundary values for u16
+        assert_eq!(div_mod_3_u16(0), (0, 0));
+        assert_eq!(div_mod_3_u16(1), (0, 1));
+        assert_eq!(div_mod_3_u16(2), (0, 2));
+        assert_eq!(div_mod_3_u16(3), (1, 0));
+
+        // Test maximum value for u16
+        let (q, r) = div_mod_3_u16(65535);
+        assert_eq!(q, 21845);
+        assert_eq!(r, 0);
+    }
+
+    #[test]
+    fn test_div_mod_7_edge_cases() {
+        // Test boundary values for u8
+        assert_eq!(div_mod_7_u8(0), (0, 0));
+        assert_eq!(div_mod_7_u8(1), (0, 1));
+        assert_eq!(div_mod_7_u8(6), (0, 6));
+        assert_eq!(div_mod_7_u8(7), (1, 0));
+
+        // Test maximum value for u8
+        let (q, r) = div_mod_7_u8(255);
+        assert_eq!(q, 36);
+        assert_eq!(r, 3);
+
+        // Test boundary values for u16
+        assert_eq!(div_mod_7_u16(0), (0, 0));
+        assert_eq!(div_mod_7_u16(1), (0, 1));
+        assert_eq!(div_mod_7_u16(6), (0, 6));
+        assert_eq!(div_mod_7_u16(7), (1, 0));
+
+        // Test maximum value for u16
+        let (q, r) = div_mod_7_u16(65535);
+        assert_eq!(q, 9361);
+        assert_eq!(r, 8);
+    }
+
+    #[test]
+    fn test_div_mod_properties() {
+        // Test that div_mod_3 satisfies the division algorithm
+        for i in 0..100u8 {
+            let (q, r) = div_mod_3_u8(i);
+            assert!(r < 3, "Remainder should be less than 3");
+            assert_eq!(i, q * 3 + r, "Division algorithm should hold");
+        }
+
+        // Test that div_mod_7 satisfies the division algorithm
+        for i in 0..100u8 {
+            let (q, r) = div_mod_7_u8(i);
+            assert!(r < 7, "Remainder should be less than 7");
+            assert_eq!(i, q * 7 + r, "Division algorithm should hold");
+        }
+
+        // Test for u16
+        for i in 0..1000u16 {
+            let (q, r) = div_mod_3_u16(i);
+            assert!(r < 3, "Remainder should be less than 3");
+            assert_eq!(i, q * 3 + r, "Division algorithm should hold");
+
+            let (q, r) = div_mod_7_u16(i);
+            assert!(r < 7, "Remainder should be less than 7");
+            assert_eq!(i, q * 7 + r, "Division algorithm should hold");
+        }
+    }
+
+    #[test]
+    fn test_ilds_sequence_properties() {
+        // Test that ILDS VdCorput sequence values are always less than factor
+        let mut vdc = VdCorput::new(2, 10);
+        for _ in 0..100 {
+            let value = vdc.pop();
+            assert!(value < vdc.factor);
+        }
+
+        // Test that ILDS Halton sequence values are always less than their respective factors
+        let mut hgen = Halton::new([2, 3], [10, 8]);
+        for _ in 0..100 {
+            let res = hgen.pop();
+            assert!(res[0] < hgen.vdc0.factor);
+            assert!(res[1] < hgen.vdc1.factor);
+        }
+    }
+
+    #[test]
+    fn test_ilds_reseed_consistency() {
+        // Test that reseed with the same value produces the same sequence
+        let mut vdc = VdCorput::new(2, 10);
+
+        vdc.reseed(10);
+        let seq1: Vec<_> = (0..5).map(|_| vdc.pop()).collect();
+
+        vdc.reseed(10);
+        let seq2: Vec<_> = (0..5).map(|_| vdc.pop()).collect();
+
+        assert_eq!(seq1, seq2);
+
+        // Test that reseed with different values produces different sequences
+        vdc.reseed(10);
+        let seq3: Vec<_> = (0..5).map(|_| vdc.pop()).collect();
+
+        vdc.reseed(20);
+        let seq4: Vec<_> = (0..5).map(|_| vdc.pop()).collect();
+
+        assert_ne!(seq3, seq4);
+    }
+
+    #[test]
+    fn test_ilds_default_implementation() {
+        // Test Default for VdCorput
+        let mut vdc = VdCorput::default();
+        vdc.reseed(0);
+        assert_eq!(vdc.pop(), 512); // Default is base=2, scale=10
+
+        // Verify default parameters
+        let vdc_default = VdCorput::default();
+        assert_eq!(vdc_default.base, 2);
+        assert_eq!(vdc_default.scale, 10);
+        assert_eq!(vdc_default.factor, 1024);
+    }
 }

@@ -708,14 +708,14 @@ mod tests {
     fn test_vdcorput_atomic_operations() {
         let mut vgen = VdCorput::new(2);
         vgen.reseed(0);
-        
+
         // Test that fetch_add returns the previous value
         let old_value = vgen.count.fetch_add(5, Ordering::Relaxed);
         assert_eq!(old_value, 0);
-        
+
         // Verify the count was updated
         assert_eq!(vgen.count.load(Ordering::Relaxed), 5);
-        
+
         // Test store operation
         vgen.count.store(10, Ordering::Relaxed);
         assert_eq!(vgen.count.load(Ordering::Relaxed), 10);
@@ -734,7 +734,7 @@ mod tests {
         for _ in 0..4 {
             let vgen_clone = Arc::clone(&vgen);
             let results_clone = Arc::clone(&results);
-            
+
             let handle = thread::spawn(move || {
                 let mut local_values = Vec::new();
                 for _ in 0..5 {
@@ -744,7 +744,7 @@ mod tests {
                 let mut results = results_clone.lock().unwrap();
                 results.push(local_values);
             });
-            
+
             handles.push(handle);
         }
 
@@ -776,11 +776,11 @@ mod tests {
                 // Each thread attempts to reseed with its thread ID
                 // This tests atomic store operations
                 vgen_clone.count.store(i as u32, Ordering::Relaxed);
-                
+
                 // Read the value back
                 vgen_clone.count.load(Ordering::Relaxed)
             });
-            
+
             handles.push(handle);
         }
 
@@ -792,7 +792,7 @@ mod tests {
 
         // Verify all operations completed without panicking
         assert_eq!(results.len(), 8);
-        
+
         // The final value should be one of the thread IDs (due to race condition)
         let final_value = vgen.count.load(Ordering::Relaxed);
         assert!(final_value < 8);
@@ -801,17 +801,17 @@ mod tests {
     #[test]
     fn test_vdcorput_memory_ordering() {
         let vgen = VdCorput::new(2);
-        
+
         // Test different valid memory orderings
         vgen.count.store(42, Ordering::SeqCst);
         assert_eq!(vgen.count.load(Ordering::SeqCst), 42);
-        
+
         vgen.count.store(100, Ordering::Release);
         assert_eq!(vgen.count.load(Ordering::Acquire), 100);
-        
+
         vgen.count.store(200, Ordering::Relaxed);
         assert_eq!(vgen.count.load(Ordering::Relaxed), 200);
-        
+
         let old = vgen.count.fetch_add(10, Ordering::AcqRel);
         assert_eq!(old, 200);
         assert_eq!(vgen.count.load(Ordering::Acquire), 210);
@@ -821,20 +821,18 @@ mod tests {
     fn test_vdcorput_compare_exchange() {
         let vgen = VdCorput::new(2);
         vgen.count.store(5, Ordering::SeqCst);
-        
+
         // Successful compare_exchange
-        let result = vgen.count.compare_exchange(
-            5, 10, 
-            Ordering::SeqCst, Ordering::SeqCst
-        );
+        let result = vgen
+            .count
+            .compare_exchange(5, 10, Ordering::SeqCst, Ordering::SeqCst);
         assert_eq!(result, Ok(5));
         assert_eq!(vgen.count.load(Ordering::SeqCst), 10);
-        
+
         // Failed compare_exchange
-        let result = vgen.count.compare_exchange(
-            5, 15, 
-            Ordering::SeqCst, Ordering::SeqCst
-        );
+        let result = vgen
+            .count
+            .compare_exchange(5, 15, Ordering::SeqCst, Ordering::SeqCst);
         assert_eq!(result, Err(10));
         assert_eq!(vgen.count.load(Ordering::SeqCst), 10);
     }
@@ -848,7 +846,7 @@ mod tests {
         // This allows multiple threads to safely mutate the same generator
         let vgen = Arc::new(Mutex::new(VdCorput::new(2)));
         vgen.lock().unwrap().reseed(0);
-        
+
         let mut handles = vec![];
         let results = Arc::new(Mutex::new(Vec::new()));
 
@@ -856,20 +854,20 @@ mod tests {
         for thread_id in 0..4 {
             let vgen_clone = Arc::clone(&vgen);
             let results_clone = Arc::clone(&results);
-            
+
             let handle = thread::spawn(move || {
                 let mut local_values = Vec::new();
-                
+
                 // Each thread generates 5 values from the shared generator
                 for _ in 0..5 {
                     let mut generator = vgen_clone.lock().unwrap();
                     local_values.push(generator.pop());
                 }
-                
+
                 let mut results = results_clone.lock().unwrap();
                 results.push((thread_id, local_values));
             });
-            
+
             handles.push(handle);
         }
 
@@ -881,13 +879,13 @@ mod tests {
         // Verify results
         let results = results.lock().unwrap();
         assert_eq!(results.len(), 4);
-        
+
         // Each thread should have generated 5 values
         for (thread_id, values) in results.iter() {
             assert_eq!(values.len(), 5);
             println!("Thread {} generated: {:?}", thread_id, values);
         }
-        
+
         // Verify that all generated values are valid VdCorput sequence values
         for (_, values) in results.iter() {
             for &value in values {
@@ -901,17 +899,17 @@ mod tests {
         // This test verifies that VdCorput implements Send and Sync
         fn is_send<T: Send>() {}
         fn is_sync<T: Sync>() {}
-        
+
         is_send::<VdCorput>();
         is_sync::<VdCorput>();
-        
+
         // Verify we can share VdCorput across threads for read-only access
         use std::sync::Arc;
         use std::thread;
-        
+
         let vgen = Arc::new(VdCorput::new(3));
         let mut handles = vec![];
-        
+
         // Create multiple threads that read from the same VdCorput
         for _ in 0..4 {
             let vgen_clone = Arc::clone(&vgen);
@@ -919,17 +917,17 @@ mod tests {
                 // Read access to fields is fine without synchronization
                 let base = vgen_clone.base;
                 assert_eq!(base, 3);
-                
+
                 // Atomic operations work without mutex
                 let old_value = vgen_clone.count.fetch_add(1, Ordering::Relaxed);
                 assert!(old_value < 100); // Just a sanity check
-                
+
                 // We can read the rev_lst without synchronization since it's immutable after creation
                 assert_eq!(vgen_clone.rev_lst.len(), 64);
             });
             handles.push(handle);
         }
-        
+
         for handle in handles {
             handle.join().unwrap();
         }
@@ -938,34 +936,34 @@ mod tests {
     #[test]
     fn test_vdcorput_clone_for_multithreading() {
         use std::thread;
-        
+
         // Create separate instances for each thread (no shared state)
         let base = 2;
         let mut handles = vec![];
-        
+
         for thread_id in 0..4 {
             let handle = thread::spawn(move || {
                 // Each thread creates its own VdCorput instance
                 let mut vgen = VdCorput::new(base);
                 vgen.reseed(thread_id as u32 * 10); // Different seed for each thread
-                
+
                 let mut values = Vec::new();
                 for _ in 0..5 {
                     values.push(vgen.pop());
                 }
-                
+
                 (thread_id, values)
             });
-            
+
             handles.push(handle);
         }
-        
+
         // Collect results
         let mut results = vec![];
         for handle in handles {
             results.push(handle.join().unwrap());
         }
-        
+
         // Verify each thread generated valid values
         for (thread_id, values) in results {
             assert_eq!(values.len(), 5);
@@ -974,5 +972,278 @@ mod tests {
             }
             println!("Thread {} generated: {:?}", thread_id, values);
         }
+    }
+
+    // Additional comprehensive tests for edge cases and different bases
+
+    #[test]
+    fn test_vdc_function_edge_cases() {
+        // Test with k=0
+        assert_eq!(vdc(0, 2), 0.0);
+        assert_eq!(vdc(0, 3), 0.0);
+        assert_eq!(vdc(0, 5), 0.0);
+
+        // Test with k=1
+        assert_eq!(vdc(1, 2), 0.5);
+        assert_eq!(vdc(1, 3), 1.0 / 3.0);
+        assert_eq!(vdc(1, 5), 0.2);
+
+        // Test with different bases
+        assert_eq!(vdc(10, 2), 0.3125); // 1010 in binary -> 0.0101
+        assert_eq!(vdc(10, 3), 0.37037037037037035); // 101 in base 3 -> 0.101
+        assert_eq!(vdc(10, 5), 0.08); // 20 in base 5 -> 0.02
+
+        // Test with larger numbers
+        let result = vdc(1000, 2);
+        assert!(result >= 0.0 && result < 1.0);
+
+        // Test with prime bases
+        assert_eq!(vdc(6, 7), 6.0 / 7.0);
+        assert_eq!(vdc(12, 11), 0.09917355371900827);
+    }
+
+    #[test]
+    fn test_vdcorput_different_bases() {
+        // Test with base 3
+        let mut vgen = VdCorput::new(3);
+        vgen.reseed(0);
+        assert_relative_eq!(vgen.pop(), 1.0 / 3.0, epsilon = 1e-10);
+        assert_relative_eq!(vgen.pop(), 2.0 / 3.0, epsilon = 1e-10);
+        assert_relative_eq!(vgen.pop(), 1.0 / 9.0, epsilon = 1e-10);
+
+        // Test with base 5
+        let mut vgen = VdCorput::new(5);
+        vgen.reseed(0);
+        assert_relative_eq!(vgen.pop(), 0.2, epsilon = 1e-10);
+        assert_relative_eq!(vgen.pop(), 0.4, epsilon = 1e-10);
+        assert_relative_eq!(vgen.pop(), 0.6, epsilon = 1e-10);
+        assert_relative_eq!(vgen.pop(), 0.8, epsilon = 1e-10);
+        assert_relative_eq!(vgen.pop(), 0.04, epsilon = 1e-10);
+
+        // Test with base 7
+        let mut vgen = VdCorput::new(7);
+        vgen.reseed(0);
+        assert_relative_eq!(vgen.pop(), 1.0 / 7.0, epsilon = 1e-10);
+        assert_relative_eq!(vgen.pop(), 2.0 / 7.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_vdcorput_large_values() {
+        let mut vgen = VdCorput::new(2);
+        vgen.reseed(1000);
+
+        // Generate several values and ensure they're valid
+        for _ in 0..10 {
+            let value = vgen.pop();
+            assert!(value >= 0.0 && value < 1.0);
+        }
+    }
+
+    #[test]
+    fn test_halton_different_bases() {
+        // Test with bases 3 and 5
+        let mut hgen = Halton::new([3, 5]);
+        hgen.reseed(0);
+        let res = hgen.pop();
+        assert_relative_eq!(res[0], 1.0 / 3.0, epsilon = 1e-10);
+        assert_relative_eq!(res[1], 0.2, epsilon = 1e-10);
+
+        // Test with bases 5 and 7
+        let mut hgen = Halton::new([5, 7]);
+        hgen.reseed(0);
+        let res = hgen.pop();
+        assert_relative_eq!(res[0], 0.2, epsilon = 1e-10);
+        assert_relative_eq!(res[1], 1.0 / 7.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_circle_different_bases() {
+        // Test with base 3
+        let mut cgen = Circle::new(3);
+        cgen.reseed(0);
+        let res = cgen.pop();
+        // Should be on unit circle
+        let radius_sq = res[0] * res[0] + res[1] * res[1];
+        assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+
+        // Test with base 5
+        let mut cgen = Circle::new(5);
+        cgen.reseed(0);
+        let res = cgen.pop();
+        let radius_sq = res[0] * res[0] + res[1] * res[1];
+        assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_disk_different_bases() {
+        // Test with bases 3 and 5
+        let mut dgen = Disk::new([3, 5]);
+        dgen.reseed(0);
+        let res = dgen.pop();
+        let radius_sq = res[0] * res[0] + res[1] * res[1];
+        assert!(radius_sq <= 1.0);
+
+        // Test with bases 5 and 7
+        let mut dgen = Disk::new([5, 7]);
+        dgen.reseed(0);
+        let res = dgen.pop();
+        let radius_sq = res[0] * res[0] + res[1] * res[1];
+        assert!(radius_sq <= 1.0);
+    }
+
+    #[test]
+    fn test_sphere_different_bases() {
+        // Test with bases 3 and 5
+        let mut sgen = Sphere::new([3, 5]);
+        sgen.reseed(0);
+        let res = sgen.pop();
+        let radius_sq = res[0] * res[0] + res[1] * res[1] + res[2] * res[2];
+        assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+
+        // Test with bases 5 and 7
+        let mut sgen = Sphere::new([5, 7]);
+        sgen.reseed(0);
+        let res = sgen.pop();
+        let radius_sq = res[0] * res[0] + res[1] * res[1] + res[2] * res[2];
+        assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_sphere3hopf_different_bases() {
+        // Test with bases 3, 5, 7
+        let mut sgen = Sphere3Hopf::new([3, 5, 7]);
+        sgen.reseed(0);
+        let res = sgen.pop();
+        let radius_sq = res[0] * res[0] + res[1] * res[1] + res[2] * res[2] + res[3] * res[3];
+        assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+
+        // Test with bases 5, 7, 11
+        let mut sgen = Sphere3Hopf::new([5, 7, 11]);
+        sgen.reseed(0);
+        let res = sgen.pop();
+        let radius_sq = res[0] * res[0] + res[1] * res[1] + res[2] * res[2] + res[3] * res[3];
+        assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_haltonn_different_bases() {
+        // Test with 4 dimensions
+        let mut hgen = HaltonN::new(&[3, 5, 7, 11]);
+        hgen.reseed(0);
+        let res = hgen.pop();
+        assert_eq!(res.len(), 4);
+        assert_relative_eq!(res[0], 1.0 / 3.0, epsilon = 1e-10);
+        assert_relative_eq!(res[1], 0.2, epsilon = 1e-10);
+        assert_relative_eq!(res[2], 1.0 / 7.0, epsilon = 1e-10);
+        assert_relative_eq!(res[3], 1.0 / 11.0, epsilon = 1e-10);
+
+        // Test with 5 dimensions
+        let mut hgen = HaltonN::new(&[2, 3, 5, 7, 11]);
+        hgen.reseed(0);
+        let res = hgen.pop();
+        assert_eq!(res.len(), 5);
+        assert_relative_eq!(res[0], 0.5, epsilon = 1e-10);
+        assert_relative_eq!(res[1], 1.0 / 3.0, epsilon = 1e-10);
+        assert_relative_eq!(res[2], 0.2, epsilon = 1e-10);
+        assert_relative_eq!(res[3], 1.0 / 7.0, epsilon = 1e-10);
+        assert_relative_eq!(res[4], 1.0 / 11.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_default_implementations() {
+        // Test Default for VdCorput
+        let mut vgen = VdCorput::default();
+        vgen.reseed(0);
+        assert_eq!(vgen.pop(), 0.5);
+
+        // Test that default base is 2
+        let vgen_default = VdCorput::default();
+        let vgen_explicit = VdCorput::new(2);
+        assert_eq!(vgen_default.base, vgen_explicit.base);
+    }
+
+    #[test]
+    fn test_sequence_properties() {
+        // Test that VdCorput sequence values are always in [0, 1)
+        let mut vgen = VdCorput::new(2);
+        for _ in 0..100 {
+            let value = vgen.pop();
+            assert!(value >= 0.0 && value < 1.0);
+        }
+
+        // Test that Halton sequence values are always in [0, 1) for each dimension
+        let mut hgen = Halton::new([2, 3]);
+        for _ in 0..100 {
+            let res = hgen.pop();
+            assert!(res[0] >= 0.0 && res[0] < 1.0);
+            assert!(res[1] >= 0.0 && res[1] < 1.0);
+        }
+
+        // Test that Circle sequence points are always on unit circle
+        let mut cgen = Circle::new(2);
+        for _ in 0..100 {
+            let res = cgen.pop();
+            let radius_sq = res[0] * res[0] + res[1] * res[1];
+            assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+        }
+
+        // Test that Disk sequence points are always within unit disk
+        let mut dgen = Disk::new([2, 3]);
+        for _ in 0..100 {
+            let res = dgen.pop();
+            let radius_sq = res[0] * res[0] + res[1] * res[1];
+            assert!(radius_sq <= 1.0);
+        }
+
+        // Test that Sphere sequence points are always on unit sphere
+        let mut sgen = Sphere::new([2, 3]);
+        for _ in 0..100 {
+            let res = sgen.pop();
+            let radius_sq = res[0] * res[0] + res[1] * res[1] + res[2] * res[2];
+            assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+        }
+
+        // Test that Sphere3Hopf sequence points are always on 3-sphere
+        let mut sgen = Sphere3Hopf::new([2, 3, 5]);
+        for _ in 0..100 {
+            let res = sgen.pop();
+            let radius_sq = res.iter().map(|&x| x * x).sum::<f64>();
+            assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+        }
+    }
+
+    #[test]
+    fn test_reseed_consistency() {
+        // Test that reseed with the same value produces the same sequence
+        let mut vgen = VdCorput::new(2);
+
+        vgen.reseed(10);
+        let seq1: Vec<_> = (0..5).map(|_| vgen.pop()).collect();
+
+        vgen.reseed(10);
+        let seq2: Vec<_> = (0..5).map(|_| vgen.pop()).collect();
+
+        for i in 0..5 {
+            assert_relative_eq!(seq1[i], seq2[i], epsilon = 1e-10);
+        }
+
+        // Test that reseed with different values produces different sequences
+        vgen.reseed(10);
+        let seq3: Vec<_> = (0..5).map(|_| vgen.pop()).collect();
+
+        vgen.reseed(20);
+        let seq4: Vec<_> = (0..5).map(|_| vgen.pop()).collect();
+
+        let mut different = false;
+        for i in 0..5 {
+            if (seq3[i] - seq4[i]).abs() > 1e-10 {
+                different = true;
+                break;
+            }
+        }
+        assert!(
+            different,
+            "Sequences with different seeds should be different"
+        );
     }
 }

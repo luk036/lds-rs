@@ -1,5 +1,5 @@
 use lds_gen::VdCorput;
-use tracing::{span, Level};
+use tracing::{Level, span};
 use tracing_subscriber;
 
 fn main() {

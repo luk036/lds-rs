@@ -558,7 +558,7 @@ mod tests {
             let handle = thread::spawn(move || {
                 // Wait for all threads to be ready
                 barrier_clone.wait();
-                
+
                 // All threads access SPHERE_TABLES simultaneously
                 let tables = SPHERE_TABLES.get();
                 assert_eq!(tables.0.len(), 300); // x table
@@ -588,14 +588,14 @@ mod tests {
             let barrier_clone = Arc::clone(&barrier);
             let handle = thread::spawn(move || {
                 barrier_clone.wait();
-                
+
                 // Each thread requests different tp values
                 let n = thread_id % 5; // Request tp values 0-4
                 let tp = get_tp(n);
-                
+
                 // Verify the returned tp values
                 assert_eq!(tp.len(), 300);
-                
+
                 // For n=0, tp is x which ranges from 0 to PI
                 // For n=1, tp is neg_cosine which ranges from -1 to 1
                 // For n>1, tp can have different ranges
@@ -626,14 +626,14 @@ mod tests {
 
         let sgen = Arc::new(Mutex::new(Sphere3::new(&[2, 3, 5])));
         sgen.lock().unwrap().reseed(0);
-        
+
         let mut handles = vec![];
         let results = Arc::new(Mutex::new(Vec::new()));
 
         for _ in 0..4 {
             let sgen_clone = Arc::clone(&sgen);
             let results_clone = Arc::clone(&results);
-            
+
             let handle = thread::spawn(move || {
                 let mut local_points = Vec::new();
                 for _ in 0..5 {
@@ -644,7 +644,7 @@ mod tests {
                 let mut results = results_clone.lock().unwrap();
                 results.push(local_points);
             });
-            
+
             handles.push(handle);
         }
 
@@ -654,7 +654,7 @@ mod tests {
 
         let results = results.lock().unwrap();
         assert_eq!(results.len(), 4);
-        
+
         for thread_results in results.iter() {
             assert_eq!(thread_results.len(), 5);
             for point in thread_results {
@@ -672,14 +672,14 @@ mod tests {
 
         let sgen = Arc::new(Mutex::new(SphereN::new(&[2, 3, 5, 7, 11])));
         sgen.lock().unwrap().reseed(0);
-        
+
         let mut handles = vec![];
         let results = Arc::new(Mutex::new(Vec::new()));
 
         for _ in 0..4 {
             let sgen_clone = Arc::clone(&sgen);
             let results_clone = Arc::clone(&results);
-            
+
             let handle = thread::spawn(move || {
                 let mut local_points = Vec::new();
                 for _ in 0..3 {
@@ -690,7 +690,7 @@ mod tests {
                 let mut results = results_clone.lock().unwrap();
                 results.push(local_points);
             });
-            
+
             handles.push(handle);
         }
 
@@ -700,7 +700,7 @@ mod tests {
 
         let results = results.lock().unwrap();
         assert_eq!(results.len(), 4);
-        
+
         for thread_results in results.iter() {
             assert_eq!(thread_results.len(), 3);
             for point in thread_results {
@@ -724,22 +724,22 @@ mod tests {
             let barrier_clone = Arc::clone(&barrier);
             let handle = thread::spawn(move || {
                 barrier_clone.wait();
-                
+
                 // Each thread creates its own sphere generator
                 let bases = match thread_id % 3 {
                     0 => &[2, 3, 5][..],
                     1 => &[3, 5, 7][..],
                     _ => &[5, 7, 11][..],
                 };
-                
+
                 let mut sgen: Box<dyn SphereGen> = if thread_id < 3 {
                     Box::new(Sphere3::new(bases))
                 } else {
                     Box::new(SphereN::new(&[bases[0], bases[1], bases[2], 13]))
                 };
-                
+
                 sgen.reseed(thread_id as u32);
-                
+
                 // Generate points
                 for _ in 0..5 {
                     let point = sgen.pop();
@@ -747,7 +747,7 @@ mod tests {
                     assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
                 }
             });
-            
+
             handles.push(handle);
         }
 
@@ -760,19 +760,297 @@ mod tests {
     fn test_sphere_trait_send_sync() {
         // This test verifies that SphereGen trait objects are Send + Sync
         fn is_send_sync<T: Send + Sync>() {}
-        
+
         is_send_sync::<Sphere3>();
         is_send_sync::<SphereN>();
-        
+
         // Verify trait objects are Send
         let mut sgen3: Box<dyn SphereGen> = Box::new(Sphere3::new(&[2, 3, 5]));
         let mut sgen_n: Box<dyn SphereGen> = Box::new(SphereN::new(&[2, 3, 5, 7]));
-        
+
         // These operations should compile if Send is implemented
         sgen3.reseed(0);
         sgen_n.reseed(0);
-        
+
         let _point3 = sgen3.pop();
         let _point_n = sgen_n.pop();
+    }
+
+    // Additional comprehensive tests for edge cases and higher dimensions
+
+    #[test]
+    fn test_linspace_edge_cases() {
+        // Test with start = stop
+        let result = linspace(1.0, 1.0, 5);
+        assert_eq!(result, vec![1.0, 1.0, 1.0, 1.0, 1.0]);
+
+        // Test with negative range
+        let result = linspace(-1.0, -0.5, 3);
+        let expected = vec![-1.0, -0.75, -0.5];
+        for i in 0..3 {
+            assert_relative_eq!(result[i], expected[i], epsilon = 1e-10);
+        }
+
+        // Test with large number of points
+        let result = linspace(0.0, 1.0, 1000);
+        assert_eq!(result.len(), 1000);
+        assert_relative_eq!(result[0], 0.0, epsilon = 1e-10);
+        assert_relative_eq!(result[999], 1.0, epsilon = 1e-10);
+        assert_relative_eq!(result[500], 0.5005005005005005, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_simple_interp_edge_cases() {
+        // Test with single point
+        let xp = vec![0.5];
+        let yp = vec![1.0];
+        let result = simple_interp(0.5, &xp, &yp);
+        assert_relative_eq!(result, 1.0, epsilon = 1e-10);
+
+        // Test with constant function
+        let xp = vec![0.0, 1.0, 2.0];
+        let yp = vec![5.0, 5.0, 5.0];
+        let result = simple_interp(1.5, &xp, &yp);
+        assert_relative_eq!(result, 5.0, epsilon = 1e-10);
+
+        // Test with non-uniform x points
+        let xp = vec![0.0, 0.1, 0.5, 2.0];
+        let yp = vec![0.0, 1.0, 2.0, 3.0];
+        let result = simple_interp(0.3, &xp, &yp);
+        // Should interpolate between points (0.1, 1.0) and (0.5, 2.0)
+        let expected = 1.0 + (0.3 - 0.1) / (0.5 - 0.1) * (2.0 - 1.0);
+        assert_relative_eq!(result, expected, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_sphere_n_higher_dimensions() {
+        // Test with 10 dimensions (11 bases)
+        let bases: Vec<u32> = (2..=12).collect();
+        let mut sgen = SphereN::new(&bases);
+        sgen.reseed(0);
+
+        let point = sgen.pop();
+        assert_eq!(point.len(), 12); // n+1 dimensions where n = 11
+
+        let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
+        assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+
+        // Test with 20 dimensions (21 bases)
+        let bases: Vec<u32> = (2..=22).collect();
+        let mut sgen = SphereN::new(&bases);
+        sgen.reseed(0);
+
+        let point = sgen.pop();
+        assert_eq!(point.len(), 22); // n+1 dimensions where n = 21
+
+        let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
+        assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_sphere_n_recursive_structure() {
+        // Test that SphereN with 4 bases wraps a Sphere3
+        let mut sgen4 = SphereN::new(&[2, 3, 5, 7]);
+        sgen4.reseed(0);
+
+        let point4 = sgen4.pop();
+        assert_eq!(point4.len(), 5);
+
+        // Test that SphereN with 5 bases wraps a SphereN with 4 bases
+        let mut sgen5 = SphereN::new(&[2, 3, 5, 7, 11]);
+        sgen5.reseed(0);
+
+        let point5 = sgen5.pop();
+        assert_eq!(point5.len(), 6);
+
+        // Both should be on unit sphere
+        let radius_sq4 = point4.iter().map(|&x| x * x).sum::<f64>();
+        let radius_sq5 = point5.iter().map(|&x| x * x).sum::<f64>();
+        assert_relative_eq!(radius_sq4, 1.0, epsilon = 1e-10);
+        assert_relative_eq!(radius_sq5, 1.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_sphere_tables_properties() {
+        let tables = SPHERE_TABLES.get();
+        let (x, neg_cosine, sine, f2, half_pi) = tables;
+
+        // Check table lengths
+        assert_eq!(x.len(), 300);
+        assert_eq!(neg_cosine.len(), 300);
+        assert_eq!(sine.len(), 300);
+        assert_eq!(f2.len(), 300);
+
+        // Check half_pi value
+        assert_relative_eq!(half_pi, PI / 2.0, epsilon = 1e-10);
+
+        // Check x table ranges from 0 to PI
+        assert_relative_eq!(x[0], 0.0, epsilon = 1e-10);
+        assert_relative_eq!(x[299], PI, epsilon = 1e-10);
+
+        // Check neg_cosine is -cos(x)
+        for i in 0..300 {
+            assert_relative_eq!(neg_cosine[i], -x[i].cos(), epsilon = 1e-10);
+        }
+
+        // Check sine is sin(x)
+        for i in 0..300 {
+            assert_relative_eq!(sine[i], x[i].sin(), epsilon = 1e-10);
+        }
+
+        // Check f2 formula: (x + neg_cosine * sine) / 2.0
+        for i in 0..300 {
+            let expected = (x[i] + neg_cosine[i] * sine[i]) / 2.0;
+            assert_relative_eq!(f2[i], expected, epsilon = 1e-10);
+        }
+    }
+
+    #[test]
+    fn test_get_tp_higher_dimensions() {
+        // Test tp values for higher dimensions
+        let tp5 = get_tp(5);
+        assert_eq!(tp5.len(), 300);
+
+        let tp10 = get_tp(10);
+        assert_eq!(tp10.len(), 300);
+
+        let tp20 = get_tp(20);
+        assert_eq!(tp20.len(), 300);
+
+        // All values should be finite
+        for &val in &tp5 {
+            assert!(val.is_finite());
+        }
+        for &val in &tp10 {
+            assert!(val.is_finite());
+        }
+        for &val in &tp20 {
+            assert!(val.is_finite());
+        }
+    }
+
+    #[test]
+    fn test_sphere_sequence_distribution() {
+        // Test that points are well-distributed (basic check)
+        let mut sgen = SphereN::new(&[2, 3, 5, 7, 11, 13]);
+        sgen.reseed(0);
+
+        let mut points = Vec::new();
+        for _ in 0..100 {
+            points.push(sgen.pop());
+        }
+
+        // All points should be on unit sphere
+        for point in &points {
+            let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
+            assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+        }
+
+        // Points should be different (basic diversity check)
+        for i in 1..points.len() {
+            let mut same = true;
+            for j in 0..points[i].len() {
+                if (points[i][j] - points[0][j]).abs() > 1e-10 {
+                    same = false;
+                    break;
+                }
+            }
+            if i < 10 {
+                assert!(!same, "First few points should be different");
+            }
+        }
+    }
+
+    #[test]
+    fn test_sphere_wrapper() {
+        // Test SphereWrapper directly
+        let mut wrapper = SphereWrapper::new([2, 3]);
+        wrapper.reseed(0);
+
+        let point = wrapper.pop();
+        assert_eq!(point.len(), 3);
+
+        let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
+        assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+
+        // Test reseed
+        wrapper.reseed(0);
+        let point1 = wrapper.pop();
+
+        wrapper.reseed(0);
+        let point2 = wrapper.pop();
+
+        for i in 0..3 {
+            assert_relative_eq!(point1[i], point2[i], epsilon = 1e-10);
+        }
+    }
+
+    #[test]
+    fn test_sphere_n_different_bases() {
+        // Test with different prime bases
+        let bases = vec![vec![3, 5, 7, 11], vec![5, 7, 11, 13], vec![7, 11, 13, 17]];
+
+        for base in bases {
+            let mut sgen = SphereN::new(&base);
+            sgen.reseed(0);
+
+            let point = sgen.pop();
+            assert_eq!(point.len(), base.len() + 1); // n+1 dimensions where n = base.len()
+
+            let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
+            assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+        }
+    }
+
+    #[test]
+    fn test_sphere3_different_bases() {
+        // Test with different prime bases
+        let bases = vec![vec![3, 5, 7], vec![5, 7, 11], vec![7, 11, 13]];
+
+        for base in bases {
+            let mut sgen = Sphere3::new(&base);
+            sgen.reseed(0);
+
+            let point = sgen.pop();
+            assert_eq!(point.len(), 4);
+
+            let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
+            assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+        }
+    }
+
+    #[test]
+    fn test_sphere_n_large_seed() {
+        // Test with large seed values
+        let mut sgen = SphereN::new(&[2, 3, 5, 7]);
+
+        for seed in [0, 100, 1000, 10000, 100000] {
+            sgen.reseed(seed);
+            let point = sgen.pop();
+
+            let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
+            assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+
+            for &coord in &point {
+                assert!(coord.is_finite());
+                assert!(coord >= -1.0 && coord <= 1.0);
+            }
+        }
+    }
+
+    #[test]
+    fn test_sphere_coordinate_bounds() {
+        // Test that all coordinates are within expected bounds
+        let mut sgen = SphereN::new(&[2, 3, 5, 7, 11, 13, 17]);
+        sgen.reseed(0);
+
+        for _ in 0..100 {
+            let point = sgen.pop();
+
+            for &coord in &point {
+                assert!(coord >= -1.0 && coord <= 1.0);
+                assert!(coord.is_finite());
+            }
+        }
     }
 }
