@@ -50,15 +50,15 @@ impl VdCorput {
     /// Increments the count and calculates the next integer value
     /// in the Van der Corput sequence.
     pub fn pop(&mut self) -> u32 {
-        let k = self.count.fetch_add(1, Ordering::Relaxed) + 1;
-        let mut k = k;
+        let count = self.count.fetch_add(1, Ordering::Relaxed) + 1;
+        let mut count = count;
         let mut vdc = 0;
         let mut factor = self.factor;
 
-        while k != 0 {
+        while count != 0 {
             factor /= self.base;
-            let remainder = k % self.base;
-            k /= self.base;
+            let remainder = count % self.base;
+            count /= self.base;
             vdc += remainder * factor;
         }
         vdc

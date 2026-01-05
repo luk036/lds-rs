@@ -29,7 +29,7 @@ const TWO_PI: f64 = std::f64::consts::TAU;
 /// Van der Corput sequence
 ///
 /// The `vdc` function is calculating the Van der Corput sequence value for a
-/// given index `k` and base `base`. It returns a `f64` value.
+/// given index `count` and base `base`. It returns a `f64` value.
 ///
 /// # Examples
 ///
@@ -39,14 +39,14 @@ const TWO_PI: f64 = std::f64::consts::TAU;
 ///
 /// assert_approx_eq!(vdc(11, 2), 0.8125);
 /// ```
-pub fn vdc(k: usize, base: usize) -> f64 {
+pub fn vdc(count: usize, base: usize) -> f64 {
     let mut res = 0.0;
     let mut denom = 1.0;
-    let mut k = k;
-    while k != 0 {
-        let remainder = k % base;
+    let mut count = count;
+    while count != 0 {
+        let remainder = count % base;
         denom *= base as f64;
-        k /= base;
+        count /= base;
         res += remainder as f64 / denom;
     }
     res
@@ -132,11 +132,11 @@ impl VdCorput {
     pub fn pop(&mut self) -> f64 {
         self.count += 1; // ignore 0
         let mut res = 0.0;
-        let mut k = self.count;
+        let mut count = self.count;
         let mut i = 0;
-        while k != 0 {
-            let remainder = k % self.base;
-            k /= self.base;
+        while count != 0 {
+            let remainder = count % self.base;
+            count /= self.base;
             res += remainder as f64 * self.rev_lst[i];
             i += 1;
         }
