@@ -52,16 +52,16 @@ impl VdCorput {
     pub fn pop(&mut self) -> u32 {
         let count = self.count.fetch_add(1, Ordering::Relaxed) + 1;
         let mut count = count;
-        let mut vdc = 0;
+        let mut reslt = 0;
         let mut factor = self.factor;
 
         while count != 0 {
-            factor /= self.base;
             let remainder = count % self.base;
+            factor /= self.base;
             count /= self.base;
-            vdc += remainder * factor;
+            reslt += remainder * factor;
         }
-        vdc
+        reslt
     }
 
     /// Resets the state of the sequence generator to a specific seed value
