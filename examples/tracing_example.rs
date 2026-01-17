@@ -1,7 +1,11 @@
+// This example demonstrates tracing integration
+// Run with: cargo run --example tracing_example --features tracing
+#[cfg(feature = "tracing")]
 use lds_gen::VdCorput;
+#[cfg(feature = "tracing")]
 use tracing::{Level, span};
-use tracing_subscriber;
 
+#[cfg(feature = "tracing")]
 fn main() {
     tracing_subscriber::fmt::init();
 

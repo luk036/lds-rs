@@ -35,7 +35,7 @@ fn main() {
     println!("3. Higher dimensional spheres:");
     let dimensions = [3, 4, 5, 6];
     for &dim in &dimensions {
-        let bases: Vec<u32> = (0..dim).map(|i| lds_gen::PRIME_TABLE[i] as u32).collect();
+        let bases: Vec<u32> = (0..dim).map(|i| lds_gen::PRIME_TABLE[i]).collect();
         let mut sgen = SphereN::new(&bases);
         sgen.reseed(0);
         let point = sgen.pop();

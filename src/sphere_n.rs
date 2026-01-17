@@ -326,7 +326,7 @@ mod tests {
     #[test]
     fn test_linspace() {
         let result = linspace(0.0, 1.0, 5);
-        let expected = vec![0.0, 0.25, 0.5, 0.75, 1.0];
+        let expected = [0.0, 0.25, 0.5, 0.75, 1.0];
         assert_eq!(result.len(), 5);
         for i in 0..5 {
             assert_relative_eq!(result[i], expected[i], epsilon = 1e-10);
@@ -336,7 +336,7 @@ mod tests {
         assert_eq!(result, vec![0.0]);
 
         let result = linspace(-1.0, 1.0, 3);
-        let expected = vec![-1.0, 0.0, 1.0];
+        let expected = [-1.0, 0.0, 1.0];
         for i in 0..3 {
             assert_relative_eq!(result[i], expected[i], epsilon = 1e-10);
         }
@@ -391,7 +391,7 @@ mod tests {
         assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
 
         for &coord in &point {
-            assert!(-1.0 <= coord && coord <= 1.0);
+            assert!((-1.0..=1.0).contains(&coord));
         }
     }
 
@@ -405,15 +405,12 @@ mod tests {
 
             let points: Vec<_> = (0..5).map(|_| sgen.pop()).collect();
 
-            for (i, point) in points.iter().enumerate() {
+            for point in points.iter() {
                 let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
                 assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
-                // Additional check with custom message if needed
-                if (radius_sq - 1.0).abs() > 1e-10 {
-                    panic!(
-                        "Base {:?}, Point {}: {:?}, r²={}",
-                        base, i, point, radius_sq
-                    );
+
+                for &coord in point {
+                    assert!((-1.0..=1.0).contains(&coord));
                 }
             }
         }
@@ -500,14 +497,14 @@ mod tests {
     #[test]
     fn test_comparison_with_python() {
         // Expected values from Python doctest examples
-        let expected_sphere3 = vec![
+        let expected_sphere3 = [
             0.2913440162992141,
             0.8966646826186098,
             -0.33333333333333337,
             6.123233995736766e-17,
         ];
 
-        let expected_spheren = vec![
+        let expected_spheren = [
             0.4809684718990214,
             0.6031153874276115,
             -0.5785601510223212,
@@ -786,7 +783,7 @@ mod tests {
 
         // Test with negative range
         let result = linspace(-1.0, -0.5, 3);
-        let expected = vec![-1.0, -0.75, -0.5];
+        let expected = [-1.0, -0.75, -0.5];
         for i in 0..3 {
             assert_relative_eq!(result[i], expected[i], epsilon = 1e-10);
         }
@@ -949,8 +946,8 @@ mod tests {
         // Points should be different (basic diversity check)
         for i in 1..points.len() {
             let mut same = true;
-            for j in 0..points[i].len() {
-                if (points[i][j] - points[0][j]).abs() > 1e-10 {
+            for (j, &coord) in points[i].iter().enumerate() {
+                if (coord - points[0][j]).abs() > 1e-10 {
                     same = false;
                     break;
                 }
@@ -1031,9 +1028,9 @@ mod tests {
             let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
             assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
 
-            for &coord in &point {
+            for coord in point {
                 assert!(coord.is_finite());
-                assert!(coord >= -1.0 && coord <= 1.0);
+                assert!((-1.0..=1.0).contains(&coord));
             }
         }
     }
@@ -1048,7 +1045,7 @@ mod tests {
             let point = sgen.pop();
 
             for &coord in &point {
-                assert!(coord >= -1.0 && coord <= 1.0);
+                assert!((-1.0..=1.0).contains(&coord));
                 assert!(coord.is_finite());
             }
         }

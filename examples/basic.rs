@@ -82,8 +82,8 @@ fn main() {
 
     // Example 7: Using prime table
     println!("7. First 10 primes from PRIME_TABLE:");
-    for i in 0..10 {
-        print!("{} ", PRIME_TABLE[i]);
+    for &prime in PRIME_TABLE.iter().take(10) {
+        print!("{} ", prime);
     }
     println!("\n");
 }

@@ -146,6 +146,17 @@ impl VdCorput {
     }
 }
 
+impl Iterator for VdCorput {
+    type Item = f64;
+
+    /// Returns the next value in the sequence
+    ///
+    /// This allows VdCorput to be used with iterator methods like `.take()`, `.collect()`, etc.
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(self.pop())
+    }
+}
+
 impl Default for VdCorput {
     fn default() -> Self {
         Self::new(2)
@@ -254,6 +265,15 @@ impl Circle {
     }
 }
 
+impl Iterator for Circle {
+    type Item = [f64; 2];
+
+    /// Returns the next point on the unit circle
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(self.pop())
+    }
+}
+
 /// Unit Disk sequence generator
 ///
 /// Generates points in the unit disk using a low-discrepancy sequence.
@@ -304,6 +324,15 @@ impl Disk {
     pub fn reseed(&mut self, seed: u32) {
         self.vdc0.reseed(seed);
         self.vdc1.reseed(seed);
+    }
+}
+
+impl Iterator for Disk {
+    type Item = [f64; 2];
+
+    /// Returns the next point in the unit disk
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(self.pop())
     }
 }
 
@@ -358,6 +387,15 @@ impl Sphere {
     pub fn reseed(&mut self, seed: u32) {
         self.cirgen.reseed(seed);
         self.vdc.reseed(seed);
+    }
+}
+
+impl Iterator for Sphere {
+    type Item = [f64; 3];
+
+    /// Returns the next point on the unit sphere
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(self.pop())
     }
 }
 
@@ -427,6 +465,15 @@ impl Sphere3Hopf {
     }
 }
 
+impl Iterator for Sphere3Hopf {
+    type Item = [f64; 4];
+
+    /// Returns the next point on the 3-sphere
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(self.pop())
+    }
+}
+
 /// N-dimensional Halton sequence generator
 ///
 /// Generates points in N-dimensional space using the Halton sequence.
@@ -473,6 +520,15 @@ impl HaltonN {
         for vdc in &mut self.vdcs {
             vdc.reseed(seed);
         }
+    }
+}
+
+impl Iterator for HaltonN {
+    type Item = Vec<f64>;
+
+    /// Returns the next point in the N-dimensional Halton sequence
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(self.pop())
     }
 }
 
@@ -889,7 +945,7 @@ mod tests {
         // Verify that all generated values are valid VdCorput sequence values
         for (_, values) in results.iter() {
             for &value in values {
-                assert!(value >= 0.0 && value < 1.0);
+                assert!((0.0..1.0).contains(&value));
             }
         }
     }
@@ -968,7 +1024,7 @@ mod tests {
         for (thread_id, values) in results {
             assert_eq!(values.len(), 5);
             for &value in &values {
-                assert!(value >= 0.0 && value < 1.0);
+                assert!((0.0..1.0).contains(&value));
             }
             println!("Thread {} generated: {:?}", thread_id, values);
         }
@@ -995,7 +1051,7 @@ mod tests {
 
         // Test with larger numbers
         let result = vdc(1000, 2);
-        assert!(result >= 0.0 && result < 1.0);
+        assert!((0.0..1.0).contains(&result));
 
         // Test with prime bases
         assert_eq!(vdc(6, 7), 6.0 / 7.0);
@@ -1035,7 +1091,7 @@ mod tests {
         // Generate several values and ensure they're valid
         for _ in 0..10 {
             let value = vgen.pop();
-            assert!(value >= 0.0 && value < 1.0);
+            assert!((0.0..1.0).contains(&value));
         }
     }
 
@@ -1168,7 +1224,7 @@ mod tests {
         let mut vgen = VdCorput::new(2);
         for _ in 0..100 {
             let value = vgen.pop();
-            assert!(value >= 0.0 && value < 1.0);
+            assert!((0.0..1.0).contains(&value));
         }
 
         // Test that Halton sequence values are always in [0, 1) for each dimension
