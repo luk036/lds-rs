@@ -99,6 +99,7 @@ impl VdCorput {
     ///
     /// * `base` - The base of the number system (defaults to 2 if not specified)
     pub fn new(base: u32) -> Self {
+        assert!(base >= 2, "base must be >= 2, got {}", base);
         let mut rev_lst = Vec::with_capacity(64);
         let mut reverse = 1.0;
         let base_f64 = base as f64;
@@ -163,6 +164,16 @@ impl Default for VdCorput {
     }
 }
 
+impl Clone for VdCorput {
+    fn clone(&self) -> Self {
+        Self {
+            count: AtomicU32::new(self.count.load(Ordering::Relaxed)),
+            base: self.base,
+            rev_lst: self.rev_lst.clone(),
+        }
+    }
+}
+
 /// Halton sequence generator
 ///
 /// Generates points in a 2-dimensional space using the Halton sequence.
@@ -216,6 +227,14 @@ impl Halton {
     }
 }
 
+impl Clone for Halton {
+    fn clone(&self) -> Self {
+        Self {
+            vdc0: self.vdc0.clone(),
+            vdc1: self.vdc1.clone(),
+        }
+    }
+}
 /// Unit Circle sequence generator
 ///
 /// Generates points on the unit circle using a low-discrepancy sequence.
@@ -242,6 +261,7 @@ impl Circle {
     ///
     /// * `base` - The base of the Van der Corput sequence
     pub fn new(base: u32) -> Self {
+        assert!(base >= 2, "base must be >= 2, got {}", base);
         Self {
             vdc: VdCorput::new(base),
         }
