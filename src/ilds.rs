@@ -139,6 +139,32 @@ macro_rules! div_mod_3_iter {
     }};
 }
 
+/// Performs division by 3 using an optimized bit manipulation algorithm
+///
+/// Divides a u8 value by 3 and returns the quotient and remainder using
+/// an efficient algorithm based on bit shifting and masking operations.
+///
+/// # Arguments
+///
+/// * `n` - The dividend to be divided by 3
+///
+/// # Returns
+///
+/// A tuple containing (quotient, remainder) where `quotient = n / 3` and `remainder = n % 3`
+///
+/// # Examples
+///
+/// ```rust
+/// use lds_gen::ilds::div_mod_3_u8;
+///
+/// let (q, r) = div_mod_3_u8(10);
+/// assert_eq!(q, 3);
+/// assert_eq!(r, 1);
+///
+/// let (q, r) = div_mod_3_u8(12);
+/// assert_eq!(q, 4);
+/// assert_eq!(r, 0);
+/// ```
 pub fn div_mod_3_u8(n: u8) -> (u8, u8) {
     // Perform the iterations using the macro
     let (q1, rem1) = div_mod_3_iter!(n); // First iteration
@@ -157,18 +183,30 @@ pub fn div_mod_3_u8(n: u8) -> (u8, u8) {
         (quotient_sum, rem4) // Equivalent to quotient_sum and rem4[1:0]
     }
 }
-
+/// Performs division by 3 using an optimized bit manipulation algorithm
+///
+/// Divides a u16 value by 3 and returns the quotient and remainder using
+/// an efficient algorithm based on bit shifting and masking operations.
+///
+/// # Arguments
+///
+/// * `n` - The dividend to be divided by 3
+///
+/// # Returns
+///
+/// A tuple containing (quotient, remainder) where `quotient = n / 3` and `remainder = n % 3`
+///
 /// # Examples
 ///
 /// ```rust
-/// use lds_gen::ilds::div_mod_3_u8;
+/// use lds_gen::ilds::div_mod_3_u16;
 ///
-/// let (q, r) = div_mod_3_u8(10);
-/// assert_eq!(q, 3);
+/// let (q, r) = div_mod_3_u16(10000);
+/// assert_eq!(q, 3333);
 /// assert_eq!(r, 1);
 ///
-/// let (q, r) = div_mod_3_u8(12);
-/// assert_eq!(q, 4);
+/// let (q, r) = div_mod_3_u16(10002);
+/// assert_eq!(q, 3334);
 /// assert_eq!(r, 0);
 /// ```
 pub fn div_mod_3_u16(n: u16) -> (u16, u16) {
@@ -193,20 +231,6 @@ pub fn div_mod_3_u16(n: u16) -> (u16, u16) {
         (quotient_sum, rem8) // Equivalent to quotient_sum and rem8[1:0]
     }
 }
-
-/// # Examples
-///
-/// ```rust
-/// use lds_gen::ilds::div_mod_3_u16;
-///
-/// let (q, r) = div_mod_3_u16(10000);
-/// assert_eq!(q, 3333);
-/// assert_eq!(r, 1);
-///
-/// let (q, r) = div_mod_3_u16(10002);
-/// assert_eq!(q, 3334);
-/// assert_eq!(r, 0);
-/// ```
 macro_rules! div_mod_7_iter {
     ($input:expr) => {{
         let q = $input >> 3; // Equivalent to extracting upper bits
@@ -215,6 +239,32 @@ macro_rules! div_mod_7_iter {
     }};
 }
 
+/// Performs division by 7 using an optimized bit manipulation algorithm
+///
+/// Divides a u8 value by 7 and returns the quotient and remainder using
+/// an efficient algorithm based on bit shifting and masking operations.
+///
+/// # Arguments
+///
+/// * `n` - The dividend to be divided by 7
+///
+/// # Returns
+///
+/// A tuple containing (quotient, remainder) where `quotient = n / 7` and `remainder = n % 7`
+///
+/// # Examples
+///
+/// ```rust
+/// use lds_gen::ilds::div_mod_7_u8;
+///
+/// let (q, r) = div_mod_7_u8(10);
+/// assert_eq!(q, 1);
+/// assert_eq!(r, 3);
+///
+/// let (q, r) = div_mod_7_u8(14);
+/// assert_eq!(q, 2);
+/// assert_eq!(r, 0);
+/// ```
 pub fn div_mod_7_u8(n: u8) -> (u8, u8) {
     // Perform the iterations using the macro
     let (q1, rem1) = div_mod_7_iter!(n); // First iteration
@@ -232,18 +282,30 @@ pub fn div_mod_7_u8(n: u8) -> (u8, u8) {
         (quotient_sum, rem3) // Equivalent to quotient_sum and rem3[1:0]
     }
 }
-
+/// Performs division by 7 using an optimized bit manipulation algorithm
+///
+/// Divides a u16 value by 7 and returns the quotient and remainder using
+/// an efficient algorithm based on bit shifting and masking operations.
+///
+/// # Arguments
+///
+/// * `n` - The dividend to be divided by 7
+///
+/// # Returns
+///
+/// A tuple containing (quotient, remainder) where `quotient = n / 7` and `remainder = n % 7`
+///
 /// # Examples
 ///
 /// ```rust
-/// use lds_gen::ilds::div_mod_7_u8;
+/// use lds_gen::ilds::div_mod_7_u16;
 ///
-/// let (q, r) = div_mod_7_u8(10);
-/// assert_eq!(q, 1);
-/// assert_eq!(r, 3);
+/// let (q, r) = div_mod_7_u16(10000);
+/// assert_eq!(q, 1428);
+/// assert_eq!(r, 4);
 ///
-/// let (q, r) = div_mod_7_u8(14);
-/// assert_eq!(q, 2);
+/// let (q, r) = div_mod_7_u16(14000);
+/// assert_eq!(q, 2000);
 /// assert_eq!(r, 0);
 /// ```
 pub fn div_mod_7_u16(n: u16) -> (u16, u16) {
