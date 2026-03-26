@@ -135,11 +135,21 @@ fn get_tp(n: usize) -> Vec<f64> {
 }
 
 /// Base trait for sphere generators
+///
+/// This trait defines the common interface for all sphere sequence generators.
+/// Implementors must be thread-safe (`Send + Sync`).
 pub trait SphereGen: Send + Sync {
-    /// Generates and returns a vector of values
+    /// Generates and returns the next point on the n-sphere
+    ///
+    /// Returns a vector of f64 values representing coordinates on the sphere.
+    /// The dimension of the output depends on the specific implementation.
     fn pop(&mut self) -> Vec<f64>;
 
     /// Reseeds the generator with a new seed
+    ///
+    /// # Arguments
+    ///
+    /// * `seed` - The seed value that determines the starting point of the sequence
     fn reseed(&mut self, seed: u32);
 }
 

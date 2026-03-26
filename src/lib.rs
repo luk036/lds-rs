@@ -165,6 +165,10 @@ impl Default for VdCorput {
 }
 
 impl Clone for VdCorput {
+    /// Creates a deep copy of the Van der Corput generator
+    ///
+    /// The cloned generator starts with the same internal state as the original,
+    /// including the current count, base, and reversed digit list.
     fn clone(&self) -> Self {
         Self {
             count: AtomicU32::new(self.count.load(Ordering::Relaxed)),
@@ -228,6 +232,10 @@ impl Halton {
 }
 
 impl Clone for Halton {
+    /// Creates a deep copy of the Halton generator
+    ///
+    /// The cloned generator contains cloned VdCorput instances for each dimension,
+    /// preserving the same internal state.
     fn clone(&self) -> Self {
         Self {
             vdc0: self.vdc0.clone(),
@@ -289,6 +297,8 @@ impl Iterator for Circle {
     type Item = [f64; 2];
 
     /// Returns the next point on the unit circle
+    ///
+    /// This allows Circle to be used with iterator methods like `.take()`, `.collect()`, etc.
     fn next(&mut self) -> Option<Self::Item> {
         Some(self.pop())
     }
@@ -351,6 +361,8 @@ impl Iterator for Disk {
     type Item = [f64; 2];
 
     /// Returns the next point in the unit disk
+    ///
+    /// This allows Disk to be used with iterator methods like `.take()`, `.collect()`, etc.
     fn next(&mut self) -> Option<Self::Item> {
         Some(self.pop())
     }
@@ -414,6 +426,8 @@ impl Iterator for Sphere {
     type Item = [f64; 3];
 
     /// Returns the next point on the unit sphere
+    ///
+    /// This allows Sphere to be used with iterator methods like `.take()`, `.collect()`, etc.
     fn next(&mut self) -> Option<Self::Item> {
         Some(self.pop())
     }
@@ -489,6 +503,8 @@ impl Iterator for Sphere3Hopf {
     type Item = [f64; 4];
 
     /// Returns the next point on the 3-sphere
+    ///
+    /// This allows Sphere3Hopf to be used with iterator methods like `.take()`, `.collect()`, etc.
     fn next(&mut self) -> Option<Self::Item> {
         Some(self.pop())
     }
@@ -547,6 +563,8 @@ impl Iterator for HaltonN {
     type Item = Vec<f64>;
 
     /// Returns the next point in the N-dimensional Halton sequence
+    ///
+    /// This allows HaltonN to be used with iterator methods like `.take()`, `.collect()`, etc.
     fn next(&mut self) -> Option<Self::Item> {
         Some(self.pop())
     }

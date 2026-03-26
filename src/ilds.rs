@@ -75,6 +75,9 @@ impl VdCorput {
 }
 
 impl Default for VdCorput {
+    /// Creates a default integer Van der Corput generator
+    ///
+    /// Defaults to base 2 with scale 10 (produces values in range [0, 1024))
     fn default() -> Self {
         Self::new(2, 10)
     }
