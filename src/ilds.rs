@@ -11,6 +11,8 @@ use std::sync::atomic::{AtomicU32, Ordering};
 /// Integer Van der Corput sequence generator
 ///
 /// Generates integer values of the Van der Corput sequence with a specified scale.
+/// Unlike floating-point VdCorput, this takes a `scale` parameter because
+/// integer output requires knowing the maximum value range.
 ///
 /// # Examples
 ///
@@ -20,6 +22,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 /// vdc.reseed(0);
 /// assert_eq!(vdc.pop(), 512); // 0.5 * 2^10 = 512
 /// ```
+#[derive(Debug)]
 pub struct VdCorput {
     base: u32,
     #[allow(dead_code)] // Used for documentation and API consistency
@@ -80,6 +83,15 @@ impl Default for VdCorput {
     /// Defaults to base 2 with scale 10 (produces values in range [0, 1024))
     fn default() -> Self {
         Self::new(2, 10)
+    }
+}
+
+impl Iterator for VdCorput {
+    type Item = u32;
+
+    /// Returns the next value in the sequence
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(self.pop())
     }
 }
 

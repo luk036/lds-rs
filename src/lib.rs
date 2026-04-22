@@ -40,6 +40,9 @@ use std::sync::atomic::{AtomicU32, Ordering};
 /// Constant for 2π
 pub const TWO_PI: f64 = 2.0 * PI;
 
+/// Maximum number of digits for Van der Corput sequence
+pub const MAX_DIGITS: usize = 64;
+
 /// Van der Corput sequence function
 ///
 /// Converts a given number `count` from base `base` to a floating point number.
@@ -86,6 +89,7 @@ pub fn vdc(count: u32, base: u32) -> f64 {
 /// assert_eq!(vgen.pop(), 0.25);
 /// assert_eq!(vgen.pop(), 0.75);
 /// ```
+#[derive(Debug)]
 pub struct VdCorput {
     count: AtomicU32,
     base: u32,
@@ -100,11 +104,11 @@ impl VdCorput {
     /// * `base` - The base of the number system (defaults to 2 if not specified)
     pub fn new(base: u32) -> Self {
         assert!(base >= 2, "base must be >= 2, got {}", base);
-        let mut rev_lst = Vec::with_capacity(64);
+        let mut rev_lst = Vec::with_capacity(MAX_DIGITS);
         let mut reverse = 1.0;
         let base_f64 = base as f64;
 
-        for _ in 0..64 {
+        for _ in 0..MAX_DIGITS {
             reverse /= base_f64;
             rev_lst.push(reverse);
         }
