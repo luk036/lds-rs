@@ -14,7 +14,7 @@ All sequence generators are thread-safe, using atomic operations for internal st
 
 ## Features
 
-- **Van der Corput sequence**: Base implementation for 1D sequences
+- **van der Corput sequence**: Base implementation for 1D sequences
 - **Halton sequence**: 2D and N-dimensional sequences using different bases
 - **Geometric sequences**:
   - `Circle`: Points on the unit circle
@@ -24,7 +24,7 @@ All sequence generators are thread-safe, using atomic operations for internal st
 - **N-dimensional spheres**:
   - `Sphere3`: Points on 3-sphere (4D)
   - `SphereN`: Points on n-sphere for arbitrary dimensions
-- **Integer sequences**: Integer versions of Van der Corput and Halton sequences
+- **Integer sequences**: Integer versions of van der Corput and Halton sequences
 - **Thread-safe**: All generators use atomic operations for safe concurrent access
 - **Prime table**: First 1000 prime numbers for use as sequence bases
 
@@ -39,7 +39,7 @@ lds-gen = "0.1.0"
 
 ## Usage
 
-### Basic Van der Corput Sequence
+### Basic van der Corput Sequence
 
 ```rust
 use lds_gen::VdCorput;
@@ -97,7 +97,7 @@ The sphere generators use thread-safe lazy initialization and caching for optima
 ```rust
 use lds_gen::ilds::{VdCorput, Halton};
 
-// Integer Van der Corput
+// Integer van der Corput
 let mut ivdc = VdCorput::new(2, 10);
 ivdc.reseed(0);
 println!("Integer value: {}", ivdc.pop()); // 512
@@ -142,7 +142,7 @@ for handle in handles {
 
 ### Core Types
 
-- `VdCorput`: Van der Corput sequence generator (thread-safe)
+- `VdCorput`: van der Corput sequence generator (thread-safe)
 - `Halton`: 2D Halton sequence generator (thread-safe)
 - `Circle`: Unit circle sequence generator (thread-safe)
 - `Disk`: Unit disk sequence generator (thread-safe)
@@ -158,7 +158,7 @@ for handle in handles {
 
 ### Integer Types (in `ilds` module)
 
-- `ilds::VdCorput`: Integer Van der Corput sequence generator (thread-safe)
+- `ilds::VdCorput`: Integer van der Corput sequence generator (thread-safe)
 - `ilds::Halton`: Integer 2D Halton sequence generator (thread-safe)
 
 ### Constants

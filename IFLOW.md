@@ -5,7 +5,7 @@
 lds-rs is a Rust library for generating Low Discrepancy Sequences (LDS). This library provides various types of low-discrepancy sequence generators that create sequences of numbers with better uniformity than random numbers. These sequences are useful in fields like computer graphics, numerical integration, and Monte Carlo simulations.
 
 The main sequence types implemented in this library are:
-1. Van der Corput sequence
+1. van der Corput sequence
 2. Halton sequence
 3. Circle sequence
 4. Sphere sequence
@@ -48,7 +48,7 @@ The library also includes integer-specific versions of these sequences in the `i
 ## Public API
 
 The library exports the following main types:
-- `VdCorput` - Van der Corput sequence generator
+- `VdCorput` - van der Corput sequence generator
 - `Halton` - 2D Halton sequence generator
 - `Circle` - Circle sequence generator
 - `Disk` - Disk sequence generator

@@ -6,7 +6,7 @@ This project, `lds-rs`, is a Rust library for generating low-discrepancy sequenc
 
 The library provides several sequence generators:
 
-*   Van der Corput
+*   van der Corput
 *   Halton
 *   Circle
 *   Disk
@@ -14,7 +14,7 @@ The library provides several sequence generators:
 *   3-Sphere Hopf
 *   N-dimensional Halton
 
-The core of the library is the Van der Corput sequence, which is extended to multiple dimensions and mapped to various geometric shapes.
+The core of the library is the van der Corput sequence, which is extended to multiple dimensions and mapped to various geometric shapes.
 
 ## Building and Running
 

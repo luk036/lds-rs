@@ -1,16 +1,16 @@
 //! Integer Low-Discrepancy Sequence (ILDS) Generator
 //!
 //! This module implements integer versions of low-discrepancy sequence generators:
-//! the Van der Corput sequence and the Halton sequence for integer output.
+//! the van der Corput sequence and the Halton sequence for integer output.
 //! These sequences are used to generate evenly distributed points in a space,
 //! which can be useful for various applications like sampling, optimization,
 //! or numerical integration.
 
 use std::sync::atomic::{AtomicU32, Ordering};
 
-/// Integer Van der Corput sequence generator
+/// Integer van der Corput sequence generator
 ///
-/// Generates integer values of the Van der Corput sequence with a specified scale.
+/// Generates integer values of the van der Corput sequence with a specified scale.
 /// Unlike floating-point VdCorput, this takes a `scale` parameter because
 /// integer output requires knowing the maximum value range.
 ///
@@ -32,7 +32,7 @@ pub struct VdCorput {
 }
 
 impl VdCorput {
-    /// Creates a new integer Van der Corput sequence generator
+    /// Creates a new integer van der Corput sequence generator
     ///
     /// # Arguments
     ///
@@ -51,7 +51,7 @@ impl VdCorput {
     /// Generates the next integer value in the sequence
     ///
     /// Increments the count and calculates the next integer value
-    /// in the Van der Corput sequence.
+    /// in the van der Corput sequence.
     pub fn pop(&mut self) -> u32 {
         let count = self.count.fetch_add(1, Ordering::Relaxed) + 1;
         let mut count = count;
@@ -78,7 +78,7 @@ impl VdCorput {
 }
 
 impl Default for VdCorput {
-    /// Creates a default integer Van der Corput generator
+    /// Creates a default integer van der Corput generator
     ///
     /// Defaults to base 2 with scale 10 (produces values in range [0, 1024))
     fn default() -> Self {
