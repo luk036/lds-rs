@@ -70,7 +70,7 @@ pub fn vdc(count: u64, base: u64) -> f64 {
         count /= base;
         reslt += remainder / denom;
     }
-    res
+    reslt
 }
 
 /// van der Corput sequence generator
