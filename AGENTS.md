@@ -87,7 +87,7 @@ Before submitting changes:
 ```rust
 // Standard library imports first
 use std::f64::consts::PI;
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 // External crates (only in tests)
 #[cfg(test)]
@@ -116,8 +116,8 @@ All sequence generators follow this consistent API:
 /// ```
 #[derive(Debug)]
 pub struct TypeName {
-    count: AtomicU32,  // Thread-safe counter
-    base: u32,
+    count: AtomicU64,  // Thread-safe counter
+    base: u64,
 }
 
 impl TypeName {
@@ -126,12 +126,12 @@ impl TypeName {
         let idx = self.count.fetch_add(1, Ordering::Relaxed);
         // Compute value using idx
     }
-    pub fn reseed(&mut self, seed: u32) { /* ... */ }
+    pub fn reseed(&mut self, seed: u64) { /* ... */ }
 }
 ```
 
 ### Thread-Safety Requirements
-- Use `AtomicU32` for thread-safe state management
+- Use `AtomicU64` for thread-safe state management
 - Use `Ordering::Relaxed` for counters (most cases)
 - Avoid `Ordering::SeqCst` unless absolutely needed
 - Cache precomputed values (e.g., `rev_lst` in `VdCorput`)

@@ -35,7 +35,7 @@
 //! tasks like sampling, integration, and optimization.
 
 use std::f64::consts::PI;
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Constant for 2π
 pub const TWO_PI: f64 = 2.0 * PI;
@@ -58,9 +58,9 @@ pub const MAX_DIGITS: usize = 64;
 /// use lds_gen::vdc;
 /// assert_eq!(vdc(11, 2), 0.8125);
 /// ```
-pub fn vdc(count: u32, base: u32) -> f64 {
+pub fn vdc(count: u64, base: u64) -> f64 {
     let mut count = count;
-    let mut res = 0.0;
+    let mut reslt = 0.0;
     let mut denom = 1.0;
     let base_f64 = base as f64;
 
@@ -68,7 +68,7 @@ pub fn vdc(count: u32, base: u32) -> f64 {
         denom *= base_f64;
         let remainder = (count % base) as f64;
         count /= base;
-        res += remainder / denom;
+        reslt += remainder / denom;
     }
     res
 }
@@ -91,8 +91,8 @@ pub fn vdc(count: u32, base: u32) -> f64 {
 /// ```
 #[derive(Debug)]
 pub struct VdCorput {
-    count: AtomicU32,
-    base: u32,
+    count: AtomicU64,
+    base: u64,
     rev_lst: Vec<f64>,
 }
 
@@ -102,7 +102,7 @@ impl VdCorput {
     /// # Arguments
     ///
     /// * `base` - The base of the number system (defaults to 2 if not specified)
-    pub fn new(base: u32) -> Self {
+    pub fn new(base: u64) -> Self {
         assert!(base >= 2, "base must be >= 2, got {}", base);
         let mut rev_lst = Vec::with_capacity(MAX_DIGITS);
         let mut reverse = 1.0;
@@ -114,7 +114,7 @@ impl VdCorput {
         }
 
         Self {
-            count: AtomicU32::new(0),
+            count: AtomicU64::new(0),
             base,
             rev_lst,
         }
@@ -146,7 +146,7 @@ impl VdCorput {
     /// # Arguments
     ///
     /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: u64) {
         self.count.store(seed, Ordering::Relaxed);
     }
 }
@@ -175,7 +175,7 @@ impl Clone for VdCorput {
     /// including the current count, base, and reversed digit list.
     fn clone(&self) -> Self {
         Self {
-            count: AtomicU32::new(self.count.load(Ordering::Relaxed)),
+            count: AtomicU64::new(self.count.load(Ordering::Relaxed)),
             base: self.base,
             rev_lst: self.rev_lst.clone(),
         }
@@ -210,7 +210,7 @@ impl Halton {
     /// # Arguments
     ///
     /// * `base` - An array of two integers used as bases for generating the Halton sequence
-    pub fn new(base: [u32; 2]) -> Self {
+    pub fn new(base: [u64; 2]) -> Self {
         Self {
             vdc0: VdCorput::new(base[0]),
             vdc1: VdCorput::new(base[1]),
@@ -229,7 +229,7 @@ impl Halton {
     /// # Arguments
     ///
     /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: u64) {
         self.vdc0.reseed(seed);
         self.vdc1.reseed(seed);
     }
@@ -272,7 +272,7 @@ impl Circle {
     /// # Arguments
     ///
     /// * `base` - The base of the van der Corput sequence
-    pub fn new(base: u32) -> Self {
+    pub fn new(base: u64) -> Self {
         assert!(base >= 2, "base must be >= 2, got {}", base);
         Self {
             vdc: VdCorput::new(base),
@@ -292,7 +292,7 @@ impl Circle {
     /// # Arguments
     ///
     /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: u64) {
         self.vdc.reseed(seed);
     }
 }
@@ -334,7 +334,7 @@ impl Disk {
     /// # Arguments
     ///
     /// * `base` - An array of two integers used as bases for generating the sequence
-    pub fn new(base: [u32; 2]) -> Self {
+    pub fn new(base: [u64; 2]) -> Self {
         Self {
             vdc0: VdCorput::new(base[0]),
             vdc1: VdCorput::new(base[1]),
@@ -355,7 +355,7 @@ impl Disk {
     /// # Arguments
     ///
     /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: u64) {
         self.vdc0.reseed(seed);
         self.vdc1.reseed(seed);
     }
@@ -398,7 +398,7 @@ impl Sphere {
     /// # Arguments
     ///
     /// * `base` - An array of two integers used as bases for generating the sequence
-    pub fn new(base: [u32; 2]) -> Self {
+    pub fn new(base: [u64; 2]) -> Self {
         Self {
             vdc: VdCorput::new(base[0]),
             cirgen: Circle::new(base[1]),
@@ -420,7 +420,7 @@ impl Sphere {
     /// # Arguments
     ///
     /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: u64) {
         self.cirgen.reseed(seed);
         self.vdc.reseed(seed);
     }
@@ -466,7 +466,7 @@ impl Sphere3Hopf {
     /// # Arguments
     ///
     /// * `base` - An array of three integers used as bases for generating the sequence
-    pub fn new(base: [u32; 3]) -> Self {
+    pub fn new(base: [u64; 3]) -> Self {
         Self {
             vdc0: VdCorput::new(base[0]),
             vdc1: VdCorput::new(base[1]),
@@ -496,7 +496,7 @@ impl Sphere3Hopf {
     /// # Arguments
     ///
     /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: u64) {
         self.vdc0.reseed(seed);
         self.vdc1.reseed(seed);
         self.vdc2.reseed(seed);
@@ -539,7 +539,7 @@ impl HaltonN {
     /// # Arguments
     ///
     /// * `base` - A slice of integers used as bases for each dimension
-    pub fn new(base: &[u32]) -> Self {
+    pub fn new(base: &[u64]) -> Self {
         let vdcs = base.iter().map(|&b| VdCorput::new(b)).collect();
         Self { vdcs }
     }
@@ -556,7 +556,7 @@ impl HaltonN {
     /// # Arguments
     ///
     /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: u64) {
         for vdc in &mut self.vdcs {
             vdc.reseed(seed);
         }
@@ -577,7 +577,7 @@ impl Iterator for HaltonN {
 /// First 1000 prime numbers
 ///
 /// Can be used as bases for low-discrepancy sequences.
-pub const PRIME_TABLE: [u32; 1000] = [
+pub const PRIME_TABLE: [u64; 1000] = [
     2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
     101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193,
     197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307,
@@ -873,7 +873,7 @@ mod tests {
             let handle = thread::spawn(move || {
                 // Each thread attempts to reseed with its thread ID
                 // This tests atomic store operations
-                vgen_clone.count.store(i as u32, Ordering::Relaxed);
+                vgen_clone.count.store(i as u64, Ordering::Relaxed);
 
                 // Read the value back
                 vgen_clone.count.load(Ordering::Relaxed)
@@ -1043,7 +1043,7 @@ mod tests {
             let handle = thread::spawn(move || {
                 // Each thread creates its own VdCorput instance
                 let mut vgen = VdCorput::new(base);
-                vgen.reseed(thread_id as u32 * 10); // Different seed for each thread
+                vgen.reseed(thread_id as u64 * 10); // Different seed for each thread
 
                 let mut values = Vec::new();
                 for _ in 0..5 {

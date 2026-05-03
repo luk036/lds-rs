@@ -150,7 +150,7 @@ pub trait SphereGen: Send + Sync {
     /// # Arguments
     ///
     /// * `seed` - The seed value that determines the starting point of the sequence
-    fn reseed(&mut self, seed: u32);
+    fn reseed(&mut self, seed: u64);
 }
 
 /// Wrapper for Sphere that implements SphereGen trait
@@ -159,7 +159,7 @@ struct SphereWrapper {
 }
 
 impl SphereWrapper {
-    fn new(base: [u32; 2]) -> Self {
+    fn new(base: [u64; 2]) -> Self {
         Self {
             sphere: crate::Sphere::new(base),
         }
@@ -171,7 +171,7 @@ impl SphereGen for SphereWrapper {
         self.sphere.pop().to_vec()
     }
 
-    fn reseed(&mut self, seed: u32) {
+    fn reseed(&mut self, seed: u64) {
         self.sphere.reseed(seed);
     }
 }
@@ -201,7 +201,7 @@ impl Sphere3 {
     /// # Arguments
     ///
     /// * `base` - Array of 3 integers used as bases for the sequence
-    pub fn new(base: &[u32]) -> Self {
+    pub fn new(base: &[u64]) -> Self {
         assert!(base.len() >= 3, "Sphere3 requires at least 3 bases");
         let tables = SPHERE_TABLES.get();
         Self {
@@ -230,7 +230,7 @@ impl SphereGen for Sphere3 {
         result
     }
 
-    fn reseed(&mut self, seed: u32) {
+    fn reseed(&mut self, seed: u64) {
         self.vdc.reseed(seed);
         self.sphere2.reseed(seed);
     }
@@ -263,7 +263,7 @@ impl SphereN {
     ///
     /// * `base` - Array of integers used as bases for the sequence
     ///   Length must be at least 3 (produces n+1 dimensional sphere)
-    pub fn new(base: &[u32]) -> Self {
+    pub fn new(base: &[u64]) -> Self {
         let n = base.len() - 1;
         assert!(n >= 2, "SphereN requires at least 3 bases (n >= 2)");
 
@@ -322,7 +322,7 @@ impl SphereGen for SphereN {
         result
     }
 
-    fn reseed(&mut self, seed: u32) {
+    fn reseed(&mut self, seed: u64) {
         self.vdc.reseed(seed);
         self.s_gen.reseed(seed);
     }
@@ -745,7 +745,7 @@ mod tests {
                     Box::new(SphereN::new(&[bases[0], bases[1], bases[2], 13]))
                 };
 
-                sgen.reseed(thread_id as u32);
+                sgen.reseed(thread_id as u64);
 
                 // Generate points
                 for _ in 0..5 {
@@ -832,7 +832,7 @@ mod tests {
     #[test]
     fn test_sphere_n_higher_dimensions() {
         // Test with 10 dimensions (11 bases)
-        let bases: Vec<u32> = (2..=12).collect();
+        let bases: Vec<u64> = (2..=12).collect();
         let mut sgen = SphereN::new(&bases);
         sgen.reseed(0);
 
@@ -843,7 +843,7 @@ mod tests {
         assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
 
         // Test with 20 dimensions (21 bases)
-        let bases: Vec<u32> = (2..=22).collect();
+        let bases: Vec<u64> = (2..=22).collect();
         let mut sgen = SphereN::new(&bases);
         sgen.reseed(0);
 

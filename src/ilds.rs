@@ -6,7 +6,7 @@
 //! which can be useful for various applications like sampling, optimization,
 //! or numerical integration.
 
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Integer van der Corput sequence generator
 ///
@@ -24,11 +24,11 @@ use std::sync::atomic::{AtomicU32, Ordering};
 /// ```
 #[derive(Debug)]
 pub struct VdCorput {
-    base: u32,
+    base: u64,
     #[allow(dead_code)] // Used for documentation and API consistency
     scale: u32,
-    count: AtomicU32,
-    factor: u32,
+    count: AtomicU64,
+    factor: u64,
 }
 
 impl VdCorput {
@@ -38,12 +38,12 @@ impl VdCorput {
     ///
     /// * `base` - The base of the number system (defaults to 2 if not specified)
     /// * `scale` - The scale factor determining the number of digits that can be represented
-    pub fn new(base: u32, scale: u32) -> Self {
+    pub fn new(base: u64, scale: u32) -> Self {
         let factor = base.pow(scale);
         Self {
             base,
             scale,
-            count: AtomicU32::new(0),
+            count: AtomicU64::new(0),
             factor,
         }
     }
@@ -52,7 +52,7 @@ impl VdCorput {
     ///
     /// Increments the count and calculates the next integer value
     /// in the van der Corput sequence.
-    pub fn pop(&mut self) -> u32 {
+    pub fn pop(&mut self) -> u64 {
         let count = self.count.fetch_add(1, Ordering::Relaxed) + 1;
         let mut count = count;
         let mut reslt = 0;
@@ -72,7 +72,7 @@ impl VdCorput {
     /// # Arguments
     ///
     /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: u64) {
         self.count.store(seed, Ordering::Relaxed);
     }
 }
@@ -87,7 +87,7 @@ impl Default for VdCorput {
 }
 
 impl Iterator for VdCorput {
-    type Item = u32;
+    type Item = u64;
 
     /// Returns the next value in the sequence
     fn next(&mut self) -> Option<Self::Item> {
@@ -121,7 +121,7 @@ impl Halton {
     ///
     /// * `base` - An array of two integers used as bases for generating the sequence
     /// * `scale` - An array of two integers used as scales for each dimension
-    pub fn new(base: [u32; 2], scale: [u32; 2]) -> Self {
+    pub fn new(base: [u64; 2], scale: [u32; 2]) -> Self {
         Self {
             vdc0: VdCorput::new(base[0], scale[0]),
             vdc1: VdCorput::new(base[1], scale[1]),
@@ -130,8 +130,8 @@ impl Halton {
 
     /// Generates the next point in the integer Halton sequence
     ///
-    /// Returns the next point as a `[u32; 2]`.
-    pub fn pop(&mut self) -> [u32; 2] {
+    /// Returns the next point as a `[u64; 2]`.
+    pub fn pop(&mut self) -> [u64; 2] {
         [self.vdc0.pop(), self.vdc1.pop()]
     }
 
@@ -140,7 +140,7 @@ impl Halton {
     /// # Arguments
     ///
     /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u32) {
+    pub fn reseed(&mut self, seed: u64) {
         self.vdc0.reseed(seed);
         self.vdc1.reseed(seed);
     }
