@@ -7,7 +7,7 @@ authors = ["Wai-Shing Luk <luk036@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/luk036/lds-rs"
 readme = "README.md"
-keywords = ["low-discrepancy", "quasi-monte-carlo", "halton", "van-der-corput", "numerical-integration"]
+keywords = ["low-discrepancy", "quasi-monte-carlo", "halton", "van-der-corput"]
 categories = ["algorithms", "science", "mathematics"]
 
 [features]
