@@ -34,15 +34,15 @@ fn simple_interp(x: f64, xp: &[f64], yp: &[f64]) -> f64 {
         return yp[yp.len() - 1];
     }
 
-    for i in 0..xp.len() - 1 {
-        if xp[i] <= x && x <= xp[i + 1] {
-            // Linear interpolation
-            let t = (x - xp[i]) / (xp[i + 1] - xp[i]);
-            return yp[i] + t * (yp[i + 1] - yp[i]);
-        }
-    }
+    // Binary search for the interval (O(log n) instead of O(n) linear scan)
+    let i = match xp.binary_search_by(|&v| v.partial_cmp(&x).unwrap()) {
+        Ok(i) => i,
+        Err(i) => i - 1,
+    };
 
-    yp[yp.len() - 1] // fallback
+    // Linear interpolation
+    let t = (x - xp[i]) / (xp[i + 1] - xp[i]);
+    yp[i] + t * (yp[i + 1] - yp[i])
 }
 
 /// Precomputed tables for sphere generation
@@ -166,6 +166,13 @@ impl SphereWrapper {
     }
 }
 
+impl SphereWrapper {
+    /// Advances the sequence by `n` points without computing them
+    pub fn advance(&self, n: u64) {
+        self.sphere.advance(n);
+    }
+}
+
 impl SphereGen for SphereWrapper {
     fn pop(&mut self) -> Vec<f64> {
         self.sphere.pop().to_vec()
@@ -211,6 +218,21 @@ impl Sphere3 {
             x: tables.0.to_vec(),
             f2: tables.3.to_vec(),
         }
+    }
+
+    /// Returns the current index (number of points generated so far)
+    pub fn get_index(&self) -> u64 {
+        self.vdc.get_index()
+    }
+
+    /// Advances the sequence by `n` points without computing them
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - The number of points to advance
+    pub fn advance(&self, n: u64) {
+        self.vdc.advance(n);
+        self.sphere2.advance(n);
     }
 }
 
@@ -325,6 +347,22 @@ impl SphereGen for SphereN {
     fn reseed(&mut self, seed: u64) {
         self.vdc.reseed(seed);
         self.s_gen.reseed(seed);
+    }
+}
+
+impl SphereN {
+    /// Returns the current index (number of points generated so far)
+    pub fn get_index(&self) -> u64 {
+        self.vdc.get_index()
+    }
+
+    /// Advances the sequence by `n` points without computing them
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - The number of points to advance
+    pub fn advance(&self, n: u64) {
+        self.vdc.advance(n);
     }
 }
 
@@ -1059,5 +1097,41 @@ mod tests {
                 assert!(coord.is_finite());
             }
         }
+    }
+
+    #[test]
+    fn test_sphere3_get_index() {
+        let mut sgen = Sphere3::new(&[2, 3, 5]);
+        assert_eq!(sgen.get_index(), 0);
+        sgen.pop();
+        assert_eq!(sgen.get_index(), 1);
+    }
+
+    #[test]
+    fn test_spheren_get_index() {
+        let mut sgen = SphereN::new(&[2, 3, 5, 7]);
+        assert_eq!(sgen.get_index(), 0);
+        sgen.pop();
+        assert_eq!(sgen.get_index(), 1);
+    }
+
+    #[test]
+    fn test_sphere3_advance() {
+        let mut sgen = Sphere3::new(&[2, 3, 5]);
+        sgen.reseed(0);
+        sgen.advance(5);
+        let point = sgen.pop();
+        let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
+        assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_spheren_advance() {
+        let mut sgen = SphereN::new(&[2, 3, 5, 7]);
+        sgen.reseed(0);
+        sgen.advance(5);
+        let point = sgen.pop();
+        let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
+        assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
     }
 }

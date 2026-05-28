@@ -141,6 +141,39 @@ impl VdCorput {
         res
     }
 
+    /// Returns the next value without advancing the state (peek)
+    ///
+    /// Allows looking at the next value in the sequence without consuming it.
+    pub fn peek(&self) -> f64 {
+        let mut count = self.count.load(Ordering::Relaxed) + 1;
+        let mut res = 0.0;
+        let mut i = 0;
+
+        while count != 0 {
+            let remainder = (count % self.base) as f64;
+            count /= self.base;
+            if remainder != 0.0 {
+                res += remainder * self.rev_lst[i];
+            }
+            i += 1;
+        }
+        res
+    }
+
+    /// Advances the sequence by `n` values without computing them
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - The number of values to advance
+    pub fn advance(&self, n: u64) {
+        self.count.fetch_add(n, Ordering::Relaxed);
+    }
+
+    /// Returns the current index (number of values generated so far)
+    pub fn get_index(&self) -> u64 {
+        self.count.load(Ordering::Relaxed)
+    }
+
     /// Resets the state of the sequence generator to a specific seed value
     ///
     /// # Arguments
@@ -224,6 +257,26 @@ impl Halton {
         [self.vdc0.pop(), self.vdc1.pop()]
     }
 
+    /// Returns the next point without advancing the state (peek)
+    pub fn peek(&self) -> [f64; 2] {
+        [self.vdc0.peek(), self.vdc1.peek()]
+    }
+
+    /// Skips `n` points in the sequence without computing them
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - The number of points to skip
+    pub fn advance(&self, n: u64) {
+        self.vdc0.advance(n);
+        self.vdc1.advance(n);
+    }
+
+    /// Returns the current index (number of points generated so far)
+    pub fn get_index(&self) -> u64 {
+        self.vdc0.get_index()
+    }
+
     /// Resets the state of the sequence generator to a specific seed value
     ///
     /// # Arguments
@@ -232,6 +285,17 @@ impl Halton {
     pub fn reseed(&mut self, seed: u64) {
         self.vdc0.reseed(seed);
         self.vdc1.reseed(seed);
+    }
+}
+
+impl Iterator for Halton {
+    type Item = [f64; 2];
+
+    /// Returns the next point in the Halton sequence
+    ///
+    /// This allows Halton to be used with iterator methods like `.take()`, `.collect()`, etc.
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(self.pop())
     }
 }
 
@@ -287,6 +351,26 @@ impl Circle {
         [theta.cos(), theta.sin()]
     }
 
+    /// Returns the next point without advancing the state (peek)
+    pub fn peek(&self) -> [f64; 2] {
+        let theta = self.vdc.peek() * TWO_PI;
+        [theta.cos(), theta.sin()]
+    }
+
+    /// Skips `n` points in the sequence without computing them
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - The number of points to skip
+    pub fn advance(&self, n: u64) {
+        self.vdc.advance(n);
+    }
+
+    /// Returns the current index (number of points generated so far)
+    pub fn get_index(&self) -> u64 {
+        self.vdc.get_index()
+    }
+
     /// Resets the state of the sequence generator to a specific seed value
     ///
     /// # Arguments
@@ -305,6 +389,14 @@ impl Iterator for Circle {
     /// This allows Circle to be used with iterator methods like `.take()`, `.collect()`, etc.
     fn next(&mut self) -> Option<Self::Item> {
         Some(self.pop())
+    }
+}
+
+impl Clone for Circle {
+    fn clone(&self) -> Self {
+        Self {
+            vdc: self.vdc.clone(),
+        }
     }
 }
 
@@ -350,6 +442,28 @@ impl Disk {
         [radius * theta.cos(), radius * theta.sin()]
     }
 
+    /// Returns the next point without advancing the state (peek)
+    pub fn peek(&self) -> [f64; 2] {
+        let theta = self.vdc0.peek() * TWO_PI;
+        let radius = self.vdc1.peek().sqrt();
+        [radius * theta.cos(), radius * theta.sin()]
+    }
+
+    /// Skips `n` points in the sequence without computing them
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - The number of points to skip
+    pub fn advance(&self, n: u64) {
+        self.vdc0.advance(n);
+        self.vdc1.advance(n);
+    }
+
+    /// Returns the current index (number of points generated so far)
+    pub fn get_index(&self) -> u64 {
+        self.vdc0.get_index()
+    }
+
     /// Resets the state of the sequence generator to a specific seed value
     ///
     /// # Arguments
@@ -369,6 +483,15 @@ impl Iterator for Disk {
     /// This allows Disk to be used with iterator methods like `.take()`, `.collect()`, etc.
     fn next(&mut self) -> Option<Self::Item> {
         Some(self.pop())
+    }
+}
+
+impl Clone for Disk {
+    fn clone(&self) -> Self {
+        Self {
+            vdc0: self.vdc0.clone(),
+            vdc1: self.vdc1.clone(),
+        }
     }
 }
 
@@ -415,6 +538,29 @@ impl Sphere {
         [sinphi * cos, sinphi * sin, cosphi]
     }
 
+    /// Returns the next point without advancing the state (peek)
+    pub fn peek(&self) -> [f64; 3] {
+        let cosphi = 2.0 * self.vdc.peek() - 1.0;
+        let sinphi = (1.0 - cosphi * cosphi).sqrt();
+        let [cos, sin] = self.cirgen.peek();
+        [sinphi * cos, sinphi * sin, cosphi]
+    }
+
+    /// Skips `n` points in the sequence without computing them
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - The number of points to skip
+    pub fn advance(&self, n: u64) {
+        self.cirgen.advance(n);
+        self.vdc.advance(n);
+    }
+
+    /// Returns the current index (number of points generated so far)
+    pub fn get_index(&self) -> u64 {
+        self.vdc.get_index()
+    }
+
     /// Resets the state of the sequence generator to a specific seed value
     ///
     /// # Arguments
@@ -434,6 +580,15 @@ impl Iterator for Sphere {
     /// This allows Sphere to be used with iterator methods like `.take()`, `.collect()`, etc.
     fn next(&mut self) -> Option<Self::Item> {
         Some(self.pop())
+    }
+}
+
+impl Clone for Sphere {
+    fn clone(&self) -> Self {
+        Self {
+            vdc: self.vdc.clone(),
+            cirgen: self.cirgen.clone(),
+        }
     }
 }
 
@@ -491,6 +646,37 @@ impl Sphere3Hopf {
         ]
     }
 
+    /// Returns the next point without advancing the state (peek)
+    pub fn peek(&self) -> [f64; 4] {
+        let phi = self.vdc0.peek() * TWO_PI;
+        let psy = self.vdc1.peek() * TWO_PI;
+        let vdc = self.vdc2.peek();
+        let cos_eta = vdc.sqrt();
+        let sin_eta = (1.0 - vdc).sqrt();
+        [
+            cos_eta * psy.cos(),
+            cos_eta * psy.sin(),
+            sin_eta * (phi + psy).cos(),
+            sin_eta * (phi + psy).sin(),
+        ]
+    }
+
+    /// Skips `n` points in the sequence without computing them
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - The number of points to skip
+    pub fn advance(&self, n: u64) {
+        self.vdc0.advance(n);
+        self.vdc1.advance(n);
+        self.vdc2.advance(n);
+    }
+
+    /// Returns the current index (number of points generated so far)
+    pub fn get_index(&self) -> u64 {
+        self.vdc0.get_index()
+    }
+
     /// Resets the state of the sequence generator to a specific seed value
     ///
     /// # Arguments
@@ -511,6 +697,16 @@ impl Iterator for Sphere3Hopf {
     /// This allows Sphere3Hopf to be used with iterator methods like `.take()`, `.collect()`, etc.
     fn next(&mut self) -> Option<Self::Item> {
         Some(self.pop())
+    }
+}
+
+impl Clone for Sphere3Hopf {
+    fn clone(&self) -> Self {
+        Self {
+            vdc0: self.vdc0.clone(),
+            vdc1: self.vdc1.clone(),
+            vdc2: self.vdc2.clone(),
+        }
     }
 }
 
@@ -571,6 +767,14 @@ impl Iterator for HaltonN {
     /// This allows HaltonN to be used with iterator methods like `.take()`, `.collect()`, etc.
     fn next(&mut self) -> Option<Self::Item> {
         Some(self.pop())
+    }
+}
+
+impl Clone for HaltonN {
+    fn clone(&self) -> Self {
+        Self {
+            vdcs: self.vdcs.clone(),
+        }
     }
 }
 
@@ -1343,5 +1547,220 @@ mod tests {
             different,
             "Sequences with different seeds should be different"
         );
+    }
+
+    #[test]
+    fn test_vdcorput_peek() {
+        let mut vgen = VdCorput::new(2);
+        vgen.reseed(0);
+        let peeked = vgen.peek();
+        assert_relative_eq!(peeked, 0.5, epsilon = 1e-10);
+        let popped = vgen.pop();
+        assert_relative_eq!(popped, 0.5, epsilon = 1e-10); // peek doesn't advance
+        assert_relative_eq!(vgen.peek(), 0.25, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_vdcorput_advance() {
+        let mut vgen = VdCorput::new(2);
+        vgen.reseed(0);
+        vgen.advance(3);
+        assert_relative_eq!(vgen.pop(), 0.125, epsilon = 1e-10);
+        vgen.reseed(0);
+        vgen.advance(4);
+        // vdc(5, 2) = binary 101 reversed = 0.101 = 0.625
+        assert_relative_eq!(vgen.pop(), 0.625, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_vdcorput_get_index() {
+        let mut vgen = VdCorput::new(2);
+        assert_eq!(vgen.get_index(), 0);
+        vgen.pop();
+        assert_eq!(vgen.get_index(), 1);
+        vgen.pop();
+        assert_eq!(vgen.get_index(), 2);
+        vgen.reseed(5);
+        assert_eq!(vgen.get_index(), 5);
+    }
+
+    #[test]
+    fn test_halton_peek() {
+        let mut hgen = Halton::new([2, 3]);
+        hgen.reseed(0);
+        let peeked = hgen.peek();
+        assert_relative_eq!(peeked[0], 0.5, epsilon = 1e-10);
+        assert_relative_eq!(peeked[1], 1.0 / 3.0, epsilon = 1e-10);
+        let popped = hgen.pop();
+        assert_relative_eq!(popped[0], 0.5, epsilon = 1e-10);
+        assert_relative_eq!(popped[1], 1.0 / 3.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_halton_advance() {
+        let mut hgen = Halton::new([2, 3]);
+        hgen.reseed(0);
+        hgen.advance(2);
+        let popped = hgen.pop();
+        assert_relative_eq!(popped[0], 0.75, epsilon = 1e-10);
+        assert_relative_eq!(popped[1], 1.0 / 9.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_halton_iterator() {
+        let mut hgen = Halton::new([2, 3]);
+        hgen.reseed(0);
+        let values: Vec<[f64; 2]> = hgen.take(3).collect();
+        assert_eq!(values.len(), 3);
+        assert_relative_eq!(values[0][0], 0.5, epsilon = 1e-10);
+        assert_relative_eq!(values[0][1], 1.0 / 3.0, epsilon = 1e-10);
+        assert_relative_eq!(values[1][0], 0.25, epsilon = 1e-10);
+        assert_relative_eq!(values[1][1], 2.0 / 3.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_circle_peek() {
+        let mut cgen = Circle::new(2);
+        cgen.reseed(0);
+        let peeked = cgen.peek();
+        let popped = cgen.pop();
+        assert_relative_eq!(peeked[0], popped[0], epsilon = 1e-10);
+        assert_relative_eq!(peeked[1], popped[1], epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_circle_advance() {
+        let mut cgen = Circle::new(2);
+        cgen.reseed(0);
+        cgen.advance(5);
+        let res = cgen.pop();
+        let radius_sq = res[0] * res[0] + res[1] * res[1];
+        assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_circle_get_index() {
+        let mut cgen = Circle::new(2);
+        assert_eq!(cgen.get_index(), 0);
+        cgen.pop();
+        assert_eq!(cgen.get_index(), 1);
+    }
+
+    #[test]
+    fn test_disk_peek() {
+        let mut dgen = Disk::new([2, 3]);
+        dgen.reseed(0);
+        let peeked = dgen.peek();
+        let popped = dgen.pop();
+        assert_relative_eq!(peeked[0], popped[0], epsilon = 1e-10);
+        assert_relative_eq!(peeked[1], popped[1], epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_disk_advance() {
+        let mut dgen = Disk::new([2, 3]);
+        dgen.reseed(0);
+        dgen.advance(5);
+        let res = dgen.pop();
+        let radius_sq = res[0] * res[0] + res[1] * res[1];
+        assert!(radius_sq <= 1.0);
+    }
+
+    #[test]
+    fn test_sphere_peek() {
+        let mut sgen = Sphere::new([2, 3]);
+        sgen.reseed(0);
+        let peeked = sgen.peek();
+        let popped = sgen.pop();
+        assert_relative_eq!(peeked[0], popped[0], epsilon = 1e-10);
+        assert_relative_eq!(peeked[1], popped[1], epsilon = 1e-10);
+        assert_relative_eq!(peeked[2], popped[2], epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_sphere_advance() {
+        let mut sgen = Sphere::new([2, 3]);
+        sgen.reseed(0);
+        sgen.advance(5);
+        let res = sgen.pop();
+        let radius_sq = res[0] * res[0] + res[1] * res[1] + res[2] * res[2];
+        assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_sphere3hopf_peek() {
+        let mut sgen = Sphere3Hopf::new([2, 3, 5]);
+        sgen.reseed(0);
+        let peeked = sgen.peek();
+        let popped = sgen.pop();
+        for i in 0..4 {
+            assert_relative_eq!(peeked[i], popped[i], epsilon = 1e-10);
+        }
+    }
+
+    #[test]
+    fn test_sphere3hopf_advance() {
+        let mut sgen = Sphere3Hopf::new([2, 3, 5]);
+        sgen.reseed(0);
+        sgen.advance(5);
+        let res = sgen.pop();
+        let radius_sq = res.iter().map(|&x| x * x).sum::<f64>();
+        assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_sphere3hopf_get_index() {
+        let mut sgen = Sphere3Hopf::new([2, 3, 5]);
+        assert_eq!(sgen.get_index(), 0);
+        sgen.pop();
+        assert_eq!(sgen.get_index(), 1);
+    }
+
+    #[test]
+    fn test_halton_get_index() {
+        let mut hgen = Halton::new([2, 3]);
+        assert_eq!(hgen.get_index(), 0);
+        hgen.pop();
+        assert_eq!(hgen.get_index(), 1);
+    }
+
+    #[test]
+    fn test_circle_clone() {
+        let mut cgen = Circle::new(2);
+        cgen.reseed(5);
+        let mut cloned = cgen.clone();
+        assert_eq!(cloned.pop(), cgen.pop());
+    }
+
+    #[test]
+    fn test_disk_clone() {
+        let mut dgen = Disk::new([2, 3]);
+        dgen.reseed(5);
+        let mut cloned = dgen.clone();
+        assert_eq!(cloned.pop(), dgen.pop());
+    }
+
+    #[test]
+    fn test_sphere_clone() {
+        let mut sgen = Sphere::new([2, 3]);
+        sgen.reseed(5);
+        let mut cloned = sgen.clone();
+        assert_eq!(cloned.pop(), sgen.pop());
+    }
+
+    #[test]
+    fn test_sphere3hopf_clone() {
+        let mut sgen = Sphere3Hopf::new([2, 3, 5]);
+        sgen.reseed(5);
+        let mut cloned = sgen.clone();
+        assert_eq!(cloned.pop(), sgen.pop());
+    }
+
+    #[test]
+    fn test_haltonn_clone() {
+        let mut hgen = HaltonN::new(&[2, 3, 5]);
+        hgen.reseed(5);
+        let mut cloned = hgen.clone();
+        assert_eq!(cloned.pop(), hgen.pop());
     }
 }

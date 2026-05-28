@@ -8,6 +8,9 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
+/// Maximum number of digits for integer van der Corput sequence
+const MAX_DIGITS: usize = 64;
+
 /// Integer van der Corput sequence generator
 ///
 /// Generates integer values of the van der Corput sequence with a specified scale.
@@ -28,7 +31,7 @@ pub struct VdCorput {
     #[allow(dead_code)] // Used for documentation and API consistency
     scale: u32,
     count: AtomicU64,
-    factor: u64,
+    factor_lst: Vec<u64>,
 }
 
 impl VdCorput {
@@ -39,12 +42,20 @@ impl VdCorput {
     /// * `base` - The base of the number system (defaults to 2 if not specified)
     /// * `scale` - The scale factor determining the number of digits that can be represented
     pub fn new(base: u64, scale: u32) -> Self {
-        let factor = base.pow(scale);
+        let mut factor = 1u64;
+        for _ in 0..scale {
+            factor = factor.checked_mul(base).expect("scale too large");
+        }
+        let mut factor_lst = Vec::with_capacity(MAX_DIGITS);
+        for _ in 0..MAX_DIGITS {
+            factor /= base;
+            factor_lst.push(factor);
+        }
         Self {
             base,
             scale,
             count: AtomicU64::new(0),
-            factor,
+            factor_lst,
         }
     }
 
@@ -56,15 +67,44 @@ impl VdCorput {
         let count = self.count.fetch_add(1, Ordering::Relaxed) + 1;
         let mut count = count;
         let mut reslt = 0;
-        let mut factor = self.factor;
+        let mut idx = 0;
 
         while count != 0 {
             let remainder = count % self.base;
-            factor /= self.base;
             count /= self.base;
-            reslt += remainder * factor;
+            reslt += remainder * self.factor_lst[idx];
+            idx += 1;
         }
         reslt
+    }
+
+    /// Returns the next value without advancing the state (peek)
+    pub fn peek(&self) -> u64 {
+        let mut count = self.count.load(Ordering::Relaxed) + 1;
+        let mut reslt = 0;
+        let mut idx = 0;
+
+        while count != 0 {
+            let remainder = count % self.base;
+            count /= self.base;
+            reslt += remainder * self.factor_lst[idx];
+            idx += 1;
+        }
+        reslt
+    }
+
+    /// Advances the sequence by `n` values without computing them
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - The number of values to advance
+    pub fn advance(&self, n: u64) {
+        self.count.fetch_add(n, Ordering::Relaxed);
+    }
+
+    /// Returns the current index (number of values generated so far)
+    pub fn get_index(&self) -> u64 {
+        self.count.load(Ordering::Relaxed)
     }
 
     /// Resets the state of the sequence generator to a specific seed value
@@ -143,6 +183,17 @@ impl Halton {
     pub fn reseed(&mut self, seed: u64) {
         self.vdc0.reseed(seed);
         self.vdc1.reseed(seed);
+    }
+}
+
+impl Iterator for Halton {
+    type Item = [u64; 2];
+
+    /// Returns the next point in the integer Halton sequence
+    ///
+    /// This allows Halton to be used with iterator methods like `.take()`, `.collect()`, etc.
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(self.pop())
     }
 }
 
@@ -472,7 +523,7 @@ mod tests {
         // Generate several values and ensure they're within valid range
         for _ in 0..10 {
             let value = vdc.pop();
-            assert!(value < vdc.factor);
+            assert!(value < vdc.factor_lst[0] * vdc.base);
         }
     }
 
@@ -501,8 +552,8 @@ mod tests {
         // Generate several values and ensure they're within valid range
         for _ in 0..10 {
             let res = hgen.pop();
-            assert!(res[0] < hgen.vdc0.factor);
-            assert!(res[1] < hgen.vdc1.factor);
+            assert!(res[0] < hgen.vdc0.factor_lst[0] * hgen.vdc0.base);
+            assert!(res[1] < hgen.vdc1.factor_lst[0] * hgen.vdc1.base);
         }
     }
 
@@ -586,19 +637,19 @@ mod tests {
 
     #[test]
     fn test_ilds_sequence_properties() {
-        // Test that ILDS VdCorput sequence values are always less than factor
+        // Test that ILDS VdCorput sequence values are always within valid range
         let mut vdc = VdCorput::new(2, 10);
         for _ in 0..100 {
             let value = vdc.pop();
-            assert!(value < vdc.factor);
+            assert!(value < vdc.factor_lst[0] * vdc.base);
         }
 
-        // Test that ILDS Halton sequence values are always less than their respective factors
+        // Test that ILDS Halton sequence values are always within valid range
         let mut hgen = Halton::new([2, 3], [10, 8]);
         for _ in 0..100 {
             let res = hgen.pop();
-            assert!(res[0] < hgen.vdc0.factor);
-            assert!(res[1] < hgen.vdc1.factor);
+            assert!(res[0] < hgen.vdc0.factor_lst[0] * hgen.vdc0.base);
+            assert!(res[1] < hgen.vdc1.factor_lst[0] * hgen.vdc1.base);
         }
     }
 
@@ -636,6 +687,53 @@ mod tests {
         let vdc_default = VdCorput::default();
         assert_eq!(vdc_default.base, 2);
         assert_eq!(vdc_default.scale, 10);
-        assert_eq!(vdc_default.factor, 1024);
+        assert_eq!(vdc_default.factor_lst[0] * vdc_default.base, 1024);
+    }
+
+    #[test]
+    fn test_ilds_vdcorput_peek() {
+        let mut vdc = VdCorput::new(2, 10);
+        vdc.reseed(0);
+        let peeked = vdc.peek();
+        assert_eq!(peeked, 512);
+        let popped = vdc.pop();
+        assert_eq!(popped, 512); // peek doesn't advance
+        assert_eq!(vdc.peek(), 256);
+    }
+
+    #[test]
+    fn test_ilds_vdcorput_advance() {
+        let mut vdc = VdCorput::new(2, 10);
+        vdc.reseed(0);
+        vdc.advance(3);
+        assert_eq!(vdc.pop(), 128); // 0.125 * 1024
+        vdc.reseed(0);
+        vdc.advance(4);
+        // vdc_i(5, 2) = binary 101 → 1*512 + 0*256 + 1*128 = 640 (0.625 * 1024)
+        assert_eq!(vdc.pop(), 640);
+    }
+
+    #[test]
+    fn test_ilds_vdcorput_get_index() {
+        let mut vdc = VdCorput::new(2, 10);
+        assert_eq!(vdc.get_index(), 0);
+        vdc.pop();
+        assert_eq!(vdc.get_index(), 1);
+        vdc.pop();
+        assert_eq!(vdc.get_index(), 2);
+        vdc.reseed(5);
+        assert_eq!(vdc.get_index(), 5);
+    }
+
+    #[test]
+    fn test_ilds_halton_iterator() {
+        let mut hgen = Halton::new([2, 3], [11, 7]);
+        hgen.reseed(0);
+        let values: Vec<[u64; 2]> = hgen.take(3).collect();
+        assert_eq!(values.len(), 3);
+        assert_eq!(values[0][0], 1024);
+        assert_eq!(values[0][1], 729);
+        assert_eq!(values[1][0], 512);
+        assert_eq!(values[1][1], 1458);
     }
 }
