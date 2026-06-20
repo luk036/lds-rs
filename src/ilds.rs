@@ -61,6 +61,8 @@ impl VdCorput {
 
     /// Generates the next integer value in the sequence
     ///
+    /// $$ \phi_b(n) = \sum_{k=0}^{m} d_k \cdot \frac{b^{\text{scale}}}{b^{k+1}} $$
+    ///
     /// Increments the count and calculates the next integer value
     /// in the van der Corput sequence.
     pub fn pop(&mut self) -> u64 {
@@ -79,6 +81,8 @@ impl VdCorput {
     }
 
     /// Returns the next value without advancing the state (peek)
+    ///
+    /// $$ \phi_b(n) = \sum_{k=0}^{m} d_k \cdot \frac{b^{\text{scale}}}{b^{k+1}} $$
     pub fn peek(&self) -> u64 {
         let mut count = self.count.load(Ordering::Relaxed) + 1;
         let mut reslt = 0;

@@ -237,6 +237,12 @@ impl Sphere3 {
 }
 
 impl SphereGen for Sphere3 {
+    /// Next point on $$ S^3 $$ using the covariance-mapping technique.
+    ///
+    /// $$ \theta = \frac{\pi}{2} v, \quad \chi = F_2^{-1}(\theta), \quad (\sin\chi \cdot \mathbf{s},\; \cos\chi) $$
+    ///
+    /// where $$ \mathbf{s} \in S^2 $$ is a uniform point on the 2-sphere
+    /// and $$ F_2(\chi) $$ is the marginal CDF for dimension 2.
     fn pop(&mut self) -> Vec<f64> {
         let ti = self.half_pi * self.vdc.pop(); // map to [t0, tm-1]
         let xi = simple_interp(ti, &self.f2, &self.x);
@@ -313,6 +319,11 @@ impl SphereN {
 }
 
 impl SphereGen for SphereN {
+    /// Next point uniformly distributed on $$ S^{n-1} $$.
+    ///
+    /// $$ \theta = v \in \[0,1\], \quad \chi = T_n^{-1}(\theta), \quad (\sin\chi \cdot \mathbf{s}_{n-2},\; \cos\chi) $$
+    ///
+    /// where $$ \mathbf{s}_{n-2} \in S^{n-2} $$ is generated recursively.
     fn pop(&mut self) -> Vec<f64> {
         if self.n == 2 {
             let tables = SPHERE_TABLES.get();
