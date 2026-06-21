@@ -124,12 +124,12 @@ impl VdCorput {
         }
     }
 
-/// Generates the next value in the sequence
-///
-/// $$ \phi_b(n) = \sum_{k=0}^{m} \frac{d_k}{b^{k+1}} $$
-///
-/// Increments the count and calculates the van der Corput sequence value
-/// for that count and base.
+    /// Generates the next value in the sequence
+    ///
+    /// $$ \phi_b(n) = \sum_{k=0}^{m} \frac{d_k}{b^{k+1}} $$
+    ///
+    /// Increments the count and calculates the van der Corput sequence value
+    /// for that count and base.
     pub fn pop(&mut self) -> f64 {
         let count = self.count.fetch_add(1, Ordering::Relaxed) + 1; // ignore 0
         let mut count = count;
@@ -147,11 +147,11 @@ impl VdCorput {
         res
     }
 
-/// Returns the next value without advancing the state (peek)
-///
-/// $$ \phi_b(n) = \sum_{k=0}^{m} \frac{d_k}{b^{k+1}} $$
-///
-/// Allows looking at the next value in the sequence without consuming it.
+    /// Returns the next value without advancing the state (peek)
+    ///
+    /// $$ \phi_b(n) = \sum_{k=0}^{m} \frac{d_k}{b^{k+1}} $$
+    ///
+    /// Allows looking at the next value in the sequence without consuming it.
     pub fn peek(&self) -> f64 {
         let mut count = self.count.load(Ordering::Relaxed) + 1;
         let mut res = 0.0;
@@ -351,13 +351,13 @@ impl Circle {
         }
     }
 
-/// Generates the next point on the unit circle
-///
-/// $$ \theta = 2\pi v, \qquad (\cos\theta,\; \sin\theta) $$
-///
-/// Maps the van der Corput value $$ v \in \[0,1\] $$ to $$ \[0, 2\pi\] $$.
-///
-/// Returns the next point on the unit circle as a `[f64; 2]`.
+    /// Generates the next point on the unit circle
+    ///
+    /// $$ \theta = 2\pi v, \qquad (\cos\theta,\; \sin\theta) $$
+    ///
+    /// Maps the van der Corput value $$ v \in \[0,1\] $$ to $$ \[0, 2\pi\] $$.
+    ///
+    /// Returns the next point on the unit circle as a `[f64; 2]`.
     pub fn pop(&mut self) -> [f64; 2] {
         let theta = self.vdc.pop() * TWO_PI; // map to [0, 2π]
         [theta.cos(), theta.sin()]
@@ -447,11 +447,11 @@ impl Disk {
         }
     }
 
-/// Generates the next point in the unit disk
-///
-/// $$ \theta = 2\pi v_\theta, \qquad r = \sqrt{v_r}, \qquad (r\cos\theta,\; r\sin\theta) $$
-///
-/// Returns the next point in the unit disk as a `[f64; 2]`.
+    /// Generates the next point in the unit disk
+    ///
+    /// $$ \theta = 2\pi v_\theta, \qquad r = \sqrt{v_r}, \qquad (r\cos\theta,\; r\sin\theta) $$
+    ///
+    /// Returns the next point in the unit disk as a `[f64; 2]`.
     pub fn pop(&mut self) -> [f64; 2] {
         let theta = self.vdc0.pop() * TWO_PI; // map to [0, 2π]
         let radius = self.vdc1.pop().sqrt(); // map to [0, 1]
@@ -546,14 +546,14 @@ impl Sphere {
         }
     }
 
-/// Generates the next point on the unit sphere
-///
-/// $$ \phi = 2v - 1,\quad v \in \[0,1\], \qquad (\sqrt{1-\phi^2}\cos\theta,\; \sqrt{1-\phi^2}\sin\theta,\; \phi) $$
-///
-/// where $$ \theta = 2\pi v_\theta $$ comes from the Circle generator.
-/// This is a cylindrical equal-area projection.
-///
-/// Returns the next point on the unit sphere as a `[f64; 3]`.
+    /// Generates the next point on the unit sphere
+    ///
+    /// $$ \phi = 2v - 1,\quad v \in \[0,1\], \qquad (\sqrt{1-\phi^2}\cos\theta,\; \sqrt{1-\phi^2}\sin\theta,\; \phi) $$
+    ///
+    /// where $$ \theta = 2\pi v_\theta $$ comes from the Circle generator.
+    /// This is a cylindrical equal-area projection.
+    ///
+    /// Returns the next point on the unit sphere as a `[f64; 3]`.
     pub fn pop(&mut self) -> [f64; 3] {
         let cosphi = 2.0 * self.vdc.pop() - 1.0; // map to [-1, 1]
         let sinphi = (1.0 - cosphi * cosphi).sqrt(); // cylindrical mapping
@@ -654,16 +654,16 @@ impl Sphere3Hopf {
         }
     }
 
-/// Generates the next point on the 3-sphere using Hopf fibration
-///
-/// The 3-sphere $$ S^3 $$ is parameterised by the Hopf fibration:
-///
-/// $$ (\cos\eta\cdot e^{i\psi},\; \sin\eta\cdot e^{i(\phi+\psi)}) $$
-///
-/// where $$ \phi,\psi \in [0, 2\pi) $$ and $$ \eta = \sqrt{v} $$ with
-/// $$ v \in \[0,1\] $$ (stratified sampling for uniform measure on $$ S^3 $$).
-///
-/// Returns the next point on the 3-sphere as a `[f64; 4]`.
+    /// Generates the next point on the 3-sphere using Hopf fibration
+    ///
+    /// The 3-sphere $$ S^3 $$ is parameterised by the Hopf fibration:
+    ///
+    /// $$ (\cos\eta\cdot e^{i\psi},\; \sin\eta\cdot e^{i(\phi+\psi)}) $$
+    ///
+    /// where $$ \phi,\psi \in [0, 2\pi) $$ and $$ \eta = \sqrt{v} $$ with
+    /// $$ v \in \[0,1\] $$ (stratified sampling for uniform measure on $$ S^3 $$).
+    ///
+    /// Returns the next point on the 3-sphere as a `[f64; 4]`.
     pub fn pop(&mut self) -> [f64; 4] {
         let phi = self.vdc0.pop() * TWO_PI; // map to [0, 2π]
         let psy = self.vdc1.pop() * TWO_PI; // map to [0, 2π]
