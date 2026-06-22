@@ -12,13 +12,17 @@ categories = ["algorithms", "science", "mathematics"]
 
 [package.metadata.docs.rs]
 rustdoc-args = ["--html-in-header", "src/doc-header.html"]
+features = ["doc-images"]
 
 [features]
 default = []
+doc-images = ["dep:embed-doc-image", "dep:svgbobdoc"]
 tracing = ["dep:tracing", "dep:tracing-subscriber"]
 env_logger = ["dep:env_logger", "dep:log"]
 
 [dependencies]
+embed-doc-image = { version = "0.1", optional = true }
+svgbobdoc = { version = "0.3", optional = true, features = ["enable"] }
 once_cell = "1.21.4"  # For thread-safe lazy initialization
 tracing = { version = "0.1.44", optional = true }
 tracing-subscriber = { version = "0.3.23", optional = true }
