@@ -1,6 +1,6 @@
 [package]
 name = "lds-gen"
-version = "0.1.7"
+version = "0.1.8"
 edition = "2024"
 description = "Low-Discrepancy Sequence (LDS) Generator in Rust"
 authors = ["Wai-Shing Luk <luk036@gmail.com>"]
