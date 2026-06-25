@@ -23,7 +23,6 @@ env_logger = ["dep:env_logger", "dep:log"]
 [dependencies]
 embed-doc-image = { version = "0.1", optional = true }
 svgbobdoc = { version = "0.3", optional = true, features = ["enable"] }
-once_cell = "1.21.4"  # For thread-safe lazy initialization
 tracing = { version = "0.1.44", optional = true }
 tracing-subscriber = { version = "0.3.23", optional = true }
 env_logger = { version = "0.11.10", optional = true }

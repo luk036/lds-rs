@@ -13,8 +13,9 @@
 //! This module implements sphere generators for arbitrary dimensions using
 //! low-discrepancy sequences.
 
-use crate::VdCorput;
+use crate::{Sphere, VdCorput};
 use std::f64::consts::PI;
+use std::sync::LazyLock;
 
 /// Simple implementation of numpy.linspace
 fn linspace(start: f64, stop: f64, num: usize) -> Vec<f64> {
@@ -88,15 +89,13 @@ impl SphereTables {
 }
 
 /// Thread-safe cached sphere tables
-static SPHERE_TABLES: once_cell::sync::Lazy<SphereTables> =
-    once_cell::sync::Lazy::new(SphereTables::new);
+static SPHERE_TABLES: LazyLock<SphereTables> = LazyLock::new(SphereTables::new);
 
 /// Calculates the table-lookup of the mapping function for n
 fn get_tp(n: usize) -> Vec<f64> {
-    use once_cell::sync::Lazy;
     use std::sync::Mutex;
 
-    static TP_CACHE: Lazy<Mutex<Vec<Vec<f64>>>> = Lazy::new(|| Mutex::new(Vec::new()));
+    static TP_CACHE: LazyLock<Mutex<Vec<Vec<f64>>>> = LazyLock::new(|| Mutex::new(Vec::new()));
 
     let mut cache = TP_CACHE.lock().unwrap();
 
@@ -153,33 +152,13 @@ pub trait SphereGen: Send + Sync {
     fn reseed(&mut self, seed: u64);
 }
 
-/// Wrapper for Sphere that implements SphereGen trait
-struct SphereWrapper {
-    sphere: crate::Sphere,
-}
-
-impl SphereWrapper {
-    fn new(base: [u64; 2]) -> Self {
-        Self {
-            sphere: crate::Sphere::new(base),
-        }
-    }
-}
-
-impl SphereWrapper {
-    /// Advances the sequence by `n` points without computing them
-    pub fn advance(&self, n: u64) {
-        self.sphere.advance(n);
-    }
-}
-
-impl SphereGen for SphereWrapper {
+impl SphereGen for Sphere {
     fn pop(&mut self) -> Vec<f64> {
-        self.sphere.pop().to_vec()
+        Sphere::pop(self).to_vec()
     }
 
     fn reseed(&mut self, seed: u64) {
-        self.sphere.reseed(seed);
+        Sphere::reseed(self, seed);
     }
 }
 
@@ -196,7 +175,7 @@ impl SphereGen for SphereWrapper {
 /// ```
 pub struct Sphere3 {
     vdc: VdCorput,
-    sphere2: SphereWrapper,
+    sphere2: Sphere,
     half_pi: f64,
     x: Vec<f64>,
     f2: Vec<f64>,
@@ -213,7 +192,7 @@ impl Sphere3 {
         let tables = SPHERE_TABLES.get();
         Self {
             vdc: VdCorput::new(base[0]),
-            sphere2: SphereWrapper::new([base[1], base[2]]),
+            sphere2: Sphere::new([base[1], base[2]]),
             half_pi: tables.4,
             x: tables.0.to_vec(),
             f2: tables.3.to_vec(),
@@ -298,7 +277,7 @@ impl SphereN {
         let vdc = VdCorput::new(base[0]);
 
         let s_gen: Box<dyn SphereGen> = if n == 2 {
-            Box::new(SphereWrapper::new([base[1], base[2]]))
+            Box::new(Sphere::new([base[1], base[2]]))
         } else {
             Box::new(SphereN::new(&base[1..]))
         };
@@ -1018,23 +997,22 @@ mod tests {
     }
 
     #[test]
-    fn test_sphere_wrapper() {
-        // Test SphereWrapper directly
-        let mut wrapper = SphereWrapper::new([2, 3]);
-        wrapper.reseed(0);
+    fn test_sphere_spheregen_impl() {
+        let mut sgen: Box<dyn SphereGen> = Box::new(Sphere::new([2, 3]));
+        sgen.reseed(0);
 
-        let point = wrapper.pop();
+        let point = sgen.pop();
         assert_eq!(point.len(), 3);
 
         let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
         assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
 
         // Test reseed
-        wrapper.reseed(0);
-        let point1 = wrapper.pop();
+        sgen.reseed(0);
+        let point1 = sgen.pop();
 
-        wrapper.reseed(0);
-        let point2 = wrapper.pop();
+        sgen.reseed(0);
+        let point2 = sgen.pop();
 
         for i in 0..3 {
             assert_relative_eq!(point1[i], point2[i], epsilon = 1e-10);

@@ -28,8 +28,6 @@ const MAX_DIGITS: usize = 64;
 #[derive(Debug)]
 pub struct VdCorput {
     base: u64,
-    #[allow(dead_code)] // Used for documentation and API consistency
-    scale: u32,
     count: AtomicU64,
     factor_lst: Vec<u64>,
 }
@@ -53,7 +51,6 @@ impl VdCorput {
         }
         Self {
             base,
-            scale,
             count: AtomicU64::new(0),
             factor_lst,
         }
@@ -201,203 +198,6 @@ impl Iterator for Halton {
     }
 }
 
-macro_rules! div_mod_3_iter {
-    ($input:expr) => {{
-        let q = $input >> 2; // Equivalent to extracting upper bits
-        let r = $input & 0x03; // Equivalent to extracting lower 2 bits
-        (q, q + r) // Return the sum of q and r
-    }};
-}
-
-/// Performs division by 3 using an optimized bit manipulation algorithm
-///
-/// Divides a u8 value by 3 and returns the quotient and remainder using
-/// an efficient algorithm based on bit shifting and masking operations.
-///
-/// # Arguments
-///
-/// * `n` - The dividend to be divided by 3
-///
-/// # Returns
-///
-/// A tuple containing (quotient, remainder) where `quotient = n / 3` and `remainder = n % 3`
-///
-/// # Examples
-///
-/// ```rust
-/// use lds_gen::ilds::div_mod_3_u8;
-///
-/// let (q, r) = div_mod_3_u8(10);
-/// assert_eq!(q, 3);
-/// assert_eq!(r, 1);
-///
-/// let (q, r) = div_mod_3_u8(12);
-/// assert_eq!(q, 4);
-/// assert_eq!(r, 0);
-/// ```
-pub fn div_mod_3_u8(n: u8) -> (u8, u8) {
-    // Perform the iterations using the macro
-    let (q1, rem1) = div_mod_3_iter!(n); // First iteration
-    let (q2, rem2) = div_mod_3_iter!(rem1); // Second iteration
-    let (q3, rem3) = div_mod_3_iter!(rem2); // Third iteration
-    let (q4, rem4) = div_mod_3_iter!(rem3); // Fourth iteration
-
-    // Calculate the final quotient sum
-    let quotient_sum = q1 + q2 + q3 + q4;
-
-    // Final check and output assignment
-    if rem4 == 0x03 {
-        // Equivalent to rem4 == 2'b11
-        (quotient_sum + 1, 0x00) // Equivalent to quotient_sum + 1 and remainder 2'b00
-    } else {
-        (quotient_sum, rem4) // Equivalent to quotient_sum and rem4[1:0]
-    }
-}
-/// Performs division by 3 using an optimized bit manipulation algorithm
-///
-/// Divides a u16 value by 3 and returns the quotient and remainder using
-/// an efficient algorithm based on bit shifting and masking operations.
-///
-/// # Arguments
-///
-/// * `n` - The dividend to be divided by 3
-///
-/// # Returns
-///
-/// A tuple containing (quotient, remainder) where `quotient = n / 3` and `remainder = n % 3`
-///
-/// # Examples
-///
-/// ```rust
-/// use lds_gen::ilds::div_mod_3_u16;
-///
-/// let (q, r) = div_mod_3_u16(10000);
-/// assert_eq!(q, 3333);
-/// assert_eq!(r, 1);
-///
-/// let (q, r) = div_mod_3_u16(10002);
-/// assert_eq!(q, 3334);
-/// assert_eq!(r, 0);
-/// ```
-pub fn div_mod_3_u16(n: u16) -> (u16, u16) {
-    // Perform the iterations using the macro
-    let (q1, rem1) = div_mod_3_iter!(n); // First iteration
-    let (q2, rem2) = div_mod_3_iter!(rem1); // Second iteration
-    let (q3, rem3) = div_mod_3_iter!(rem2); // Third iteration
-    let (q4, rem4) = div_mod_3_iter!(rem3); // Fourth iteration
-    let (q5, rem5) = div_mod_3_iter!(rem4); // 5th iteration
-    let (q6, rem6) = div_mod_3_iter!(rem5); // 6th iteration
-    let (q7, rem7) = div_mod_3_iter!(rem6); // 7th iteration
-    let (q8, rem8) = div_mod_3_iter!(rem7); // 8th iteration
-
-    // Calculate the final quotient sum
-    let quotient_sum = q1 + q2 + q3 + q4 + q5 + q6 + q7 + q8;
-
-    // Final check and output assignment
-    if rem8 == 0x03 {
-        // Equivalent to rem4 == 2'b11
-        (quotient_sum + 1, 0x00) // Equivalent to quotient_sum + 1 and remainder 2'b00
-    } else {
-        (quotient_sum, rem8) // Equivalent to quotient_sum and rem8[1:0]
-    }
-}
-macro_rules! div_mod_7_iter {
-    ($input:expr) => {{
-        let q = $input >> 3; // Equivalent to extracting upper bits
-        let r = $input & 0x07; // Equivalent to extracting lower 3 bits
-        (q, q + r) // Return the sum of q and r
-    }};
-}
-
-/// Performs division by 7 using an optimized bit manipulation algorithm
-///
-/// Divides a u8 value by 7 and returns the quotient and remainder using
-/// an efficient algorithm based on bit shifting and masking operations.
-///
-/// # Arguments
-///
-/// * `n` - The dividend to be divided by 7
-///
-/// # Returns
-///
-/// A tuple containing (quotient, remainder) where `quotient = n / 7` and `remainder = n % 7`
-///
-/// # Examples
-///
-/// ```rust
-/// use lds_gen::ilds::div_mod_7_u8;
-///
-/// let (q, r) = div_mod_7_u8(10);
-/// assert_eq!(q, 1);
-/// assert_eq!(r, 3);
-///
-/// let (q, r) = div_mod_7_u8(14);
-/// assert_eq!(q, 2);
-/// assert_eq!(r, 0);
-/// ```
-pub fn div_mod_7_u8(n: u8) -> (u8, u8) {
-    // Perform the iterations using the macro
-    let (q1, rem1) = div_mod_7_iter!(n); // First iteration
-    let (q2, rem2) = div_mod_7_iter!(rem1); // Second iteration
-    let (q3, rem3) = div_mod_7_iter!(rem2); // Third iteration
-
-    // Calculate the final quotient sum
-    let quotient_sum = q1 + q2 + q3;
-
-    // Final check and output assignment
-    if rem3 == 0x07 {
-        // Equivalent to rem3 == 3'b111
-        (quotient_sum + 1, 0x000) // Equivalent to quotient_sum + 1 and remainder 3'b000
-    } else {
-        (quotient_sum, rem3) // Equivalent to quotient_sum and rem3[1:0]
-    }
-}
-/// Performs division by 7 using an optimized bit manipulation algorithm
-///
-/// Divides a u16 value by 7 and returns the quotient and remainder using
-/// an efficient algorithm based on bit shifting and masking operations.
-///
-/// # Arguments
-///
-/// * `n` - The dividend to be divided by 7
-///
-/// # Returns
-///
-/// A tuple containing (quotient, remainder) where `quotient = n / 7` and `remainder = n % 7`
-///
-/// # Examples
-///
-/// ```rust
-/// use lds_gen::ilds::div_mod_7_u16;
-///
-/// let (q, r) = div_mod_7_u16(10000);
-/// assert_eq!(q, 1428);
-/// assert_eq!(r, 4);
-///
-/// let (q, r) = div_mod_7_u16(14000);
-/// assert_eq!(q, 2000);
-/// assert_eq!(r, 0);
-/// ```
-pub fn div_mod_7_u16(n: u16) -> (u16, u16) {
-    // Perform the iterations using the macro
-    let (q1, rem1) = div_mod_7_iter!(n); // First iteration
-    let (q2, rem2) = div_mod_7_iter!(rem1); // Second iteration
-    let (q3, rem3) = div_mod_7_iter!(rem2); // Third iteration
-    let (q4, rem4) = div_mod_7_iter!(rem3); // Fourth iteration
-    let (q5, rem5) = div_mod_7_iter!(rem4); // 5th iteration
-
-    // Calculate the final quotient sum
-    let quotient_sum = q1 + q2 + q3 + q4 + q5;
-
-    // Final check and output assignment
-    if rem5 == 0x07 {
-        // Equivalent to rem5 == 3'b111
-        (quotient_sum + 1, 0x000) // Equivalent to quotient_sum + 1 and remainder 3'b000
-    } else {
-        (quotient_sum, rem5) // Equivalent to quotient_sum and rem5[1:0]
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -440,50 +240,6 @@ mod tests {
         let res = hgen.pop();
         assert_eq!(res[0], 512); // 0.25 * 2048
         assert_eq!(res[1], 1458); // 2/3 * 2187
-    }
-
-    #[test]
-    fn test_div_mod_3_u8() {
-        let (q, r) = div_mod_3_u8(10);
-        assert_eq!(q, 3);
-        assert_eq!(r, 1);
-
-        let (q, r) = div_mod_3_u8(12);
-        assert_eq!(q, 4);
-        assert_eq!(r, 0);
-    }
-
-    #[test]
-    fn test_div_mod_3_u16() {
-        let (q, r) = div_mod_3_u16(10000);
-        assert_eq!(q, 3333);
-        assert_eq!(r, 1);
-
-        let (q, r) = div_mod_3_u16(10002);
-        assert_eq!(q, 3334);
-        assert_eq!(r, 0);
-    }
-
-    #[test]
-    fn test_div_mod_7_u8() {
-        let (q, r) = div_mod_7_u8(10);
-        assert_eq!(q, 1);
-        assert_eq!(r, 3);
-
-        let (q, r) = div_mod_7_u8(14);
-        assert_eq!(q, 2);
-        assert_eq!(r, 0);
-    }
-
-    #[test]
-    fn test_div_mod_7_u16() {
-        let (q, r) = div_mod_7_u16(10000);
-        assert_eq!(q, 1428);
-        assert_eq!(r, 4);
-
-        let (q, r) = div_mod_7_u16(14000);
-        assert_eq!(q, 2000);
-        assert_eq!(r, 0);
     }
 
     // Additional comprehensive tests for edge cases and different scales
@@ -562,84 +318,6 @@ mod tests {
     }
 
     #[test]
-    fn test_div_mod_3_edge_cases() {
-        // Test boundary values for u8
-        assert_eq!(div_mod_3_u8(0), (0, 0));
-        assert_eq!(div_mod_3_u8(1), (0, 1));
-        assert_eq!(div_mod_3_u8(2), (0, 2));
-        assert_eq!(div_mod_3_u8(3), (1, 0));
-
-        // Test maximum value for u8
-        let (q, r) = div_mod_3_u8(255);
-        assert_eq!(q, 85);
-        assert_eq!(r, 0);
-
-        // Test boundary values for u16
-        assert_eq!(div_mod_3_u16(0), (0, 0));
-        assert_eq!(div_mod_3_u16(1), (0, 1));
-        assert_eq!(div_mod_3_u16(2), (0, 2));
-        assert_eq!(div_mod_3_u16(3), (1, 0));
-
-        // Test maximum value for u16
-        let (q, r) = div_mod_3_u16(65535);
-        assert_eq!(q, 21845);
-        assert_eq!(r, 0);
-    }
-
-    #[test]
-    fn test_div_mod_7_edge_cases() {
-        // Test boundary values for u8
-        assert_eq!(div_mod_7_u8(0), (0, 0));
-        assert_eq!(div_mod_7_u8(1), (0, 1));
-        assert_eq!(div_mod_7_u8(6), (0, 6));
-        assert_eq!(div_mod_7_u8(7), (1, 0));
-
-        // Test maximum value for u8
-        let (q, r) = div_mod_7_u8(255);
-        assert_eq!(q, 36);
-        assert_eq!(r, 3);
-
-        // Test boundary values for u16
-        assert_eq!(div_mod_7_u16(0), (0, 0));
-        assert_eq!(div_mod_7_u16(1), (0, 1));
-        assert_eq!(div_mod_7_u16(6), (0, 6));
-        assert_eq!(div_mod_7_u16(7), (1, 0));
-
-        // Test maximum value for u16
-        let (q, r) = div_mod_7_u16(65535);
-        assert_eq!(q, 9361);
-        assert_eq!(r, 8);
-    }
-
-    #[test]
-    fn test_div_mod_properties() {
-        // Test that div_mod_3 satisfies the division algorithm
-        for i in 0..100u8 {
-            let (q, r) = div_mod_3_u8(i);
-            assert!(r < 3, "Remainder should be less than 3");
-            assert_eq!(i, q * 3 + r, "Division algorithm should hold");
-        }
-
-        // Test that div_mod_7 satisfies the division algorithm
-        for i in 0..100u8 {
-            let (q, r) = div_mod_7_u8(i);
-            assert!(r < 7, "Remainder should be less than 7");
-            assert_eq!(i, q * 7 + r, "Division algorithm should hold");
-        }
-
-        // Test for u16
-        for i in 0..1000u16 {
-            let (q, r) = div_mod_3_u16(i);
-            assert!(r < 3, "Remainder should be less than 3");
-            assert_eq!(i, q * 3 + r, "Division algorithm should hold");
-
-            let (q, r) = div_mod_7_u16(i);
-            assert!(r < 7, "Remainder should be less than 7");
-            assert_eq!(i, q * 7 + r, "Division algorithm should hold");
-        }
-    }
-
-    #[test]
     fn test_ilds_sequence_properties() {
         // Test that ILDS VdCorput sequence values are always within valid range
         let mut vdc = VdCorput::new(2, 10);
@@ -690,7 +368,6 @@ mod tests {
         // Verify default parameters
         let vdc_default = VdCorput::default();
         assert_eq!(vdc_default.base, 2);
-        assert_eq!(vdc_default.scale, 10);
         assert_eq!(vdc_default.factor_lst[0] * vdc_default.base, 1024);
     }
 

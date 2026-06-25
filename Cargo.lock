@@ -264,7 +264,6 @@ dependencies = [
  "embed-doc-image",
  "env_logger",
  "log",
- "once_cell",
  "svgbobdoc",
  "tracing",
  "tracing-subscriber",
