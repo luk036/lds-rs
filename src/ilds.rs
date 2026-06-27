@@ -41,13 +41,11 @@ impl VdCorput {
     /// * `scale` - The scale factor determining the number of digits that can be represented
     pub fn new(base: u64, scale: u32) -> Self {
         let mut factor = 1u64;
-        for _ in 0..scale {
+        let n = (scale as usize).min(MAX_DIGITS);
+        let mut factor_lst = vec![0u64; MAX_DIGITS];
+        for i in 0..n {
+            factor_lst[n - 1 - i] = factor;
             factor = factor.checked_mul(base).expect("scale too large");
-        }
-        let mut factor_lst = Vec::with_capacity(MAX_DIGITS);
-        for _ in 0..MAX_DIGITS {
-            factor /= base;
-            factor_lst.push(factor);
         }
         Self {
             base,
