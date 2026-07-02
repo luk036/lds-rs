@@ -138,6 +138,10 @@ impl Iterator for VdCorput {
 ///
 /// Generates points in a 2-dimensional space using integer Halton sequences.
 ///
+/// $$ H(n) = (\phi_{b_0}(n),\; \phi_{b_1}(n)) $$
+///
+/// where $$ \phi_b $$ is the van der Corput radical inverse in base $$ b $$.
+///
 /// # Examples
 ///
 /// ```

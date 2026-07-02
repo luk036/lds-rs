@@ -300,6 +300,16 @@ impl Clone for VdCorput {
 /// assert_eq!(res[0], 0.5);
 /// assert!((res[1] - 1.0/3.0).abs() < 1e-10);
 /// ```
+#[cfg_attr(feature = "doc-images", doc = svgbobdoc::transform!(
+/// ```svgbob
+///  .───────────.     .───────────.
+///  │ VdC(2, n) │────►│ x_coord   │
+///  '───────────'     '───────────'
+///  .───────────.     .───────────.
+///  │ VdC(3, n) │────►│ y_coord   │
+///  '───────────'     '───────────'
+/// ```
+))]
 pub struct Halton {
     vdc0: VdCorput,
     vdc1: VdCorput,
