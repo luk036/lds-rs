@@ -30,6 +30,7 @@ log = { version = "0.4.32", optional = true }
 
 [dev-dependencies]
 approx = "0.5"  # For floating point comparisons in tests
+dhat = "0.3"    # Heap profiling for memory usage verification
 
 [[example]]
 name = "tracing_example"

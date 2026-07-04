@@ -938,7 +938,11 @@ impl HaltonN {
     ///
     /// Returns the next point as a `Vec<f64>`.
     pub fn pop(&mut self) -> Vec<f64> {
-        self.vdcs.iter_mut().map(|vdc| vdc.pop()).collect()
+        let mut result = Vec::with_capacity(self.vdcs.len());
+        for vdc in &mut self.vdcs {
+            result.push(vdc.pop());
+        }
+        result
     }
 
     /// Resets the state of the sequence generator to a specific seed value

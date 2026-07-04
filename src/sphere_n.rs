@@ -15,7 +15,7 @@
 
 use crate::{Sphere, VdCorput};
 use std::f64::consts::PI;
-use std::sync::LazyLock;
+use std::sync::{Arc, LazyLock, Mutex};
 
 /// Simple implementation of numpy.linspace
 fn linspace(start: f64, stop: f64, num: usize) -> Vec<f64> {
@@ -91,46 +91,79 @@ impl SphereTables {
 /// Thread-safe cached sphere tables
 static SPHERE_TABLES: LazyLock<SphereTables> = LazyLock::new(SphereTables::new);
 
-/// Calculates the table-lookup of the mapping function for n
-fn get_tp(n: usize) -> Vec<f64> {
-    use std::sync::Mutex;
+const TP_CACHE_MAX: usize = 64;
 
-    static TP_CACHE: LazyLock<Mutex<Vec<Vec<f64>>>> = LazyLock::new(|| Mutex::new(Vec::new()));
+/// Shared cached reference-counted tp tables (bounded to prevent unbounded growth).
+fn tp_cache_get(n: usize) -> Arc<[f64]> {
+    static TP_CACHE: LazyLock<Mutex<Vec<Arc<[f64]>>>> = LazyLock::new(|| Mutex::new(Vec::new()));
 
     let mut cache = TP_CACHE.lock().unwrap();
 
-    // If already computed, return a copy
-    if n < cache.len() {
-        return cache[n].clone();
-    }
-
-    // Ensure cache has entries up to n
-    while cache.len() <= n {
-        let tables = SPHERE_TABLES.get();
-        let x = &tables.0;
-        let neg_cosine = &tables.1;
-        let sine = &tables.2;
-
+    while cache.len() <= n && cache.len() < TP_CACHE_MAX {
         let new_n = cache.len();
-        let tp = if new_n == 0 {
-            x.to_vec()
+        let x = &SPHERE_TABLES.x;
+        let neg_cosine = &SPHERE_TABLES.neg_cosine;
+        let sine = &SPHERE_TABLES.sine;
+
+        let tp: Arc<[f64]> = if new_n == 0 {
+            Arc::from(x.clone().into_boxed_slice())
         } else if new_n == 1 {
-            neg_cosine.to_vec()
+            Arc::from(neg_cosine.clone().into_boxed_slice())
         } else {
             let tp_minus2 = &cache[new_n - 2];
-            x.iter()
+            let v: Vec<f64> = x
+                .iter()
                 .enumerate()
                 .map(|(i, _xi)| {
                     ((new_n - 1) as f64 * tp_minus2[i]
                         + neg_cosine[i] * sine[i].powi((new_n - 1) as i32))
                         / new_n as f64
                 })
-                .collect()
+                .collect();
+            Arc::from(v.into_boxed_slice())
         };
         cache.push(tp);
     }
 
-    cache[n].clone()
+    if n < cache.len() {
+        cache[n].clone()
+    } else {
+        compute_tp_arc(n)
+    }
+}
+
+/// Compute tp(n) from scratch without using the cache (slow path for n >= TP_CACHE_MAX).
+fn compute_tp_arc(n: usize) -> Arc<[f64]> {
+    if n == 0 {
+        return Arc::from(SPHERE_TABLES.x.clone().into_boxed_slice());
+    }
+    if n == 1 {
+        return Arc::from(SPHERE_TABLES.neg_cosine.clone().into_boxed_slice());
+    }
+
+    let x = &SPHERE_TABLES.x;
+    let neg_cosine = &SPHERE_TABLES.neg_cosine;
+    let sine = &SPHERE_TABLES.sine;
+
+    let mut prev2: Vec<f64> = x.to_vec();
+    let mut prev1: Vec<f64> = neg_cosine.to_vec();
+
+    for k in 2..=n {
+        let tp_k: Vec<f64> = x
+            .iter()
+            .enumerate()
+            .map(|(i, _xi)| {
+                ((k - 1) as f64 * prev2[i] + neg_cosine[i] * sine[i].powi((k - 1) as i32))
+                    / k as f64
+            })
+            .collect();
+        if k == n {
+            return Arc::from(tp_k.into_boxed_slice());
+        }
+        prev2 = prev1;
+        prev1 = tp_k;
+    }
+    unreachable!()
 }
 
 /// Base trait for sphere generators
@@ -176,9 +209,6 @@ impl SphereGen for Sphere {
 pub struct Sphere3 {
     vdc: VdCorput,
     sphere2: Sphere,
-    half_pi: f64,
-    x: Vec<f64>,
-    f2: Vec<f64>,
 }
 
 impl Sphere3 {
@@ -189,13 +219,9 @@ impl Sphere3 {
     /// * `base` - Array of 3 integers used as bases for the sequence
     pub fn new(base: &[u64]) -> Self {
         assert!(base.len() >= 3, "Sphere3 requires at least 3 bases");
-        let tables = SPHERE_TABLES.get();
         Self {
             vdc: VdCorput::new(base[0]),
             sphere2: Sphere::new([base[1], base[2]]),
-            half_pi: tables.4,
-            x: tables.0.to_vec(),
-            f2: tables.3.to_vec(),
         }
     }
 
@@ -223,8 +249,9 @@ impl SphereGen for Sphere3 {
     /// where $$ \mathbf{s} \in S^2 $$ is a uniform point on the 2-sphere
     /// and $$ F_2(\chi) $$ is the marginal CDF for dimension 2.
     fn pop(&mut self) -> Vec<f64> {
-        let ti = self.half_pi * self.vdc.pop(); // map to [t0, tm-1]
-        let xi = simple_interp(ti, &self.f2, &self.x);
+        let tables = SPHERE_TABLES.get();
+        let ti = tables.4 * self.vdc.pop();
+        let xi = simple_interp(ti, tables.3, tables.0);
         let cosxi = xi.cos();
         let sinxi = xi.sin();
 
@@ -258,7 +285,7 @@ pub struct SphereN {
     vdc: VdCorput,
     s_gen: Box<dyn SphereGen>,
     n: usize,
-    tp: Vec<f64>,
+    tp: Arc<[f64]>,
     tp_start: f64,
     range: f64,
 }
@@ -282,7 +309,7 @@ impl SphereN {
             Box::new(SphereN::new(&base[1..]))
         };
 
-        let tp = get_tp(n);
+        let tp = tp_cache_get(n);
         let tp_start = tp[0];
         let range = tp[tp.len() - 1] - tp_start;
 
@@ -403,17 +430,17 @@ mod tests {
 
     #[test]
     fn test_get_tp() {
-        let tp0 = get_tp(0);
+        let tp0 = tp_cache_get(0);
         assert_eq!(tp0.len(), 300);
         assert_relative_eq!(tp0[0], 0.0, epsilon = 1e-10);
         assert_relative_eq!(tp0[tp0.len() - 1], PI, epsilon = 1e-10);
 
-        let tp1 = get_tp(1);
+        let tp1 = tp_cache_get(1);
         assert_eq!(tp1.len(), 300);
         assert_relative_eq!(tp1[0], -0.0f64.cos(), epsilon = 1e-10);
         assert_relative_eq!(tp1[tp1.len() - 1], -PI.cos(), epsilon = 1e-10);
 
-        let tp2 = get_tp(2);
+        let tp2 = tp_cache_get(2);
         assert_eq!(tp2.len(), 300);
     }
 
@@ -626,7 +653,7 @@ mod tests {
 
                 // Each thread requests different tp values
                 let n = thread_id % 5; // Request tp values 0-4
-                let tp = get_tp(n);
+                let tp = tp_cache_get(n);
 
                 // Verify the returned tp values
                 assert_eq!(tp.len(), 300);
@@ -642,7 +669,7 @@ mod tests {
                     assert!(tp[tp.len() - 1] >= -1.0 && tp[tp.len() - 1] <= 1.0);
                 }
                 // For n>1, we just check that the values are finite
-                for &val in &tp {
+                for &val in &*tp {
                     assert!(val.is_finite());
                 }
             });
@@ -943,23 +970,23 @@ mod tests {
     #[test]
     fn test_get_tp_higher_dimensions() {
         // Test tp values for higher dimensions
-        let tp5 = get_tp(5);
+        let tp5 = tp_cache_get(5);
         assert_eq!(tp5.len(), 300);
 
-        let tp10 = get_tp(10);
+        let tp10 = tp_cache_get(10);
         assert_eq!(tp10.len(), 300);
 
-        let tp20 = get_tp(20);
+        let tp20 = tp_cache_get(20);
         assert_eq!(tp20.len(), 300);
 
         // All values should be finite
-        for &val in &tp5 {
+        for &val in &*tp5 {
             assert!(val.is_finite());
         }
-        for &val in &tp10 {
+        for &val in &*tp10 {
             assert!(val.is_finite());
         }
-        for &val in &tp20 {
+        for &val in &*tp20 {
             assert!(val.is_finite());
         }
     }
@@ -1122,5 +1149,24 @@ mod tests {
         let point = sgen.pop();
         let radius_sq = point.iter().map(|&x| x * x).sum::<f64>();
         assert_relative_eq!(radius_sq, 1.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_struct_sizes() {
+        use std::mem::size_of;
+        assert_eq!(size_of::<Sphere3>(), 120);
+        assert_eq!(size_of::<SphereN>(), 96);
+    }
+
+    #[test]
+    fn test_arc_sharing() {
+        let _s1 = Sphere3::new(&[2, 3, 5]);
+        let _s2 = Sphere3::new(&[3, 5, 7]);
+        assert_eq!(SPHERE_TABLES.x.len(), 300);
+
+        let tp4 = tp_cache_get(3);
+        let _n1 = SphereN::new(&[2, 3, 5, 7]);
+        let _n2 = SphereN::new(&[3, 5, 7, 11]);
+        assert_eq!(tp4.len(), 300);
     }
 }
