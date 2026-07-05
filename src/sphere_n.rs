@@ -133,6 +133,9 @@ fn tp_cache_get(n: usize) -> Arc<[f64]> {
 }
 
 /// Compute tp(n) from scratch without using the cache (slow path for n >= TP_CACHE_MAX).
+///
+/// Tp(n) depends only on Tp(n-2), so we iterate by step 2 from the
+/// appropriate parity base case (Tp(0)=X for even n, Tp(1)=neg_cosine for odd).
 fn compute_tp_arc(n: usize) -> Arc<[f64]> {
     if n == 0 {
         return Arc::from(SPHERE_TABLES.x.clone().into_boxed_slice());
@@ -145,23 +148,23 @@ fn compute_tp_arc(n: usize) -> Arc<[f64]> {
     let neg_cosine = &SPHERE_TABLES.neg_cosine;
     let sine = &SPHERE_TABLES.sine;
 
-    let mut prev2: Vec<f64> = x.to_vec();
-    let mut prev1: Vec<f64> = neg_cosine.to_vec();
+    let even = n % 2 == 0;
+    let mut prev: Vec<f64> = if even { x.to_vec() } else { neg_cosine.to_vec() };
+    let start: usize = if even { 2 } else { 3 };
 
-    for k in 2..=n {
+    for k in (start..=n).step_by(2) {
         let tp_k: Vec<f64> = x
             .iter()
             .enumerate()
             .map(|(i, _xi)| {
-                ((k - 1) as f64 * prev2[i] + neg_cosine[i] * sine[i].powi((k - 1) as i32))
+                ((k - 1) as f64 * prev[i] + neg_cosine[i] * sine[i].powi((k - 1) as i32))
                     / k as f64
             })
             .collect();
         if k == n {
             return Arc::from(tp_k.into_boxed_slice());
         }
-        prev2 = prev1;
-        prev1 = tp_k;
+        prev = tp_k;
     }
     unreachable!()
 }
