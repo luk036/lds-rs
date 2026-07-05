@@ -104,11 +104,26 @@ fn main() {
 
     let stats = HeapStats::get();
     println!("=== dhat HeapStats ===\n");
-    println!("  Total bytes allocated (cumulative): {:>10}", stats.total_bytes);
-    println!("  Total blocks allocated (cumulative): {:>10}", stats.total_blocks);
-    println!("  Max bytes live at any point:        {:>10}", stats.max_bytes);
-    println!("  Current bytes in use:               {:>10}", stats.curr_bytes);
-    println!("  Current blocks in use:              {:>10}", stats.curr_blocks);
+    println!(
+        "  Total bytes allocated (cumulative): {:>10}",
+        stats.total_bytes
+    );
+    println!(
+        "  Total blocks allocated (cumulative): {:>10}",
+        stats.total_blocks
+    );
+    println!(
+        "  Max bytes live at any point:        {:>10}",
+        stats.max_bytes
+    );
+    println!(
+        "  Current bytes in use:               {:>10}",
+        stats.curr_bytes
+    );
+    println!(
+        "  Current blocks in use:              {:>10}",
+        stats.curr_blocks
+    );
     println!();
     println!("dhat-heap.json written at exit. View with `dhat-view dhat-heap.json`.");
 }
