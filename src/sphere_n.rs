@@ -148,8 +148,12 @@ fn compute_tp_arc(n: usize) -> Arc<[f64]> {
     let neg_cosine = &SPHERE_TABLES.neg_cosine;
     let sine = &SPHERE_TABLES.sine;
 
-    let even = n % 2 == 0;
-    let mut prev: Vec<f64> = if even { x.to_vec() } else { neg_cosine.to_vec() };
+    let even = n.is_multiple_of(2);
+    let mut prev: Vec<f64> = if even {
+        x.to_vec()
+    } else {
+        neg_cosine.to_vec()
+    };
     let start: usize = if even { 2 } else { 3 };
 
     for k in (start..=n).step_by(2) {
@@ -157,8 +161,7 @@ fn compute_tp_arc(n: usize) -> Arc<[f64]> {
             .iter()
             .enumerate()
             .map(|(i, _xi)| {
-                ((k - 1) as f64 * prev[i] + neg_cosine[i] * sine[i].powi((k - 1) as i32))
-                    / k as f64
+                ((k - 1) as f64 * prev[i] + neg_cosine[i] * sine[i].powi((k - 1) as i32)) / k as f64
             })
             .collect();
         if k == n {
