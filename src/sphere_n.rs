@@ -1138,7 +1138,7 @@ mod tests {
     }
 
     #[test]
-    fn test_sphere3_advance() {
+    fn test_sphere3_skip() {
         let mut sgen = Sphere3::new(&[2, 3, 5]);
         sgen.reseed(0);
         sgen.advance(5);
@@ -1148,7 +1148,7 @@ mod tests {
     }
 
     #[test]
-    fn test_spheren_advance() {
+    fn test_spheren_skip() {
         let mut sgen = SphereN::new(&[2, 3, 5, 7]);
         sgen.reseed(0);
         sgen.advance(5);

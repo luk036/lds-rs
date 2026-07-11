@@ -662,7 +662,7 @@ impl Clone for Disk {
 /// ```
 ))]
 pub struct Sphere {
-    vdc: VdCorput,
+    vdcgen: VdCorput,
     cirgen: Circle,
 }
 
@@ -674,7 +674,7 @@ impl Sphere {
     /// * `base` - An array of two integers used as bases for generating the sequence
     pub fn new(base: [u64; 2]) -> Self {
         Self {
-            vdc: VdCorput::new(base[0]),
+            vdcgen: VdCorput::new(base[0]),
             cirgen: Circle::new(base[1]),
         }
     }
@@ -688,7 +688,7 @@ impl Sphere {
     ///
     /// Returns the next point on the unit sphere as a `[f64; 3]`.
     pub fn pop(&mut self) -> [f64; 3] {
-        let cosphi = 2.0 * self.vdc.pop() - 1.0; // map to [-1, 1]
+        let cosphi = 2.0 * self.vdcgen.pop() - 1.0; // map to [-1, 1]
         let sinphi = (1.0 - cosphi * cosphi).sqrt(); // cylindrical mapping
         let [cos, sin] = self.cirgen.pop();
         [sinphi * cos, sinphi * sin, cosphi]
@@ -698,7 +698,7 @@ impl Sphere {
     ///
     /// $$ \phi = 2v - 1, \qquad (\sqrt{1-\phi^2}\cos\theta,\; \sqrt{1-\phi^2}\sin\theta,\; \phi) $$
     pub fn peek(&self) -> [f64; 3] {
-        let cosphi = 2.0 * self.vdc.peek() - 1.0;
+        let cosphi = 2.0 * self.vdcgen.peek() - 1.0;
         let sinphi = (1.0 - cosphi * cosphi).sqrt();
         let [cos, sin] = self.cirgen.peek();
         [sinphi * cos, sinphi * sin, cosphi]
@@ -711,12 +711,12 @@ impl Sphere {
     /// * `n` - The number of points to skip
     pub fn advance(&self, n: u64) {
         self.cirgen.advance(n);
-        self.vdc.advance(n);
+        self.vdcgen.advance(n);
     }
 
     /// Returns the current index (number of points generated so far)
     pub fn get_index(&self) -> u64 {
-        self.vdc.get_index()
+        self.vdcgen.get_index()
     }
 
     /// Resets the state of the sequence generator to a specific seed value
@@ -726,7 +726,7 @@ impl Sphere {
     /// * `seed` - The seed value that determines the starting point of the sequence generation
     pub fn reseed(&mut self, seed: u64) {
         self.cirgen.reseed(seed);
-        self.vdc.reseed(seed);
+        self.vdcgen.reseed(seed);
     }
 }
 
@@ -744,7 +744,7 @@ impl Iterator for Sphere {
 impl Clone for Sphere {
     fn clone(&self) -> Self {
         Self {
-            vdc: self.vdc.clone(),
+            vdcgen: self.vdcgen.clone(),
             cirgen: self.cirgen.clone(),
         }
     }
