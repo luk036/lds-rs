@@ -9,7 +9,9 @@ fn main() {
         let p = s3.pop();
         print!("  {i}: [");
         for (j, &v) in p.iter().enumerate() {
-            if j > 0 { print!(", "); }
+            if j > 0 {
+                print!(", ");
+            }
             print!("{v:.16}");
         }
         println!("]");
@@ -23,7 +25,9 @@ fn main() {
         let p = sn4.pop();
         print!("  {i}: [");
         for (j, &v) in p.iter().enumerate() {
-            if j > 0 { print!(", "); }
+            if j > 0 {
+                print!(", ");
+            }
             print!("{v:.16}");
         }
         println!("]");
@@ -37,7 +41,9 @@ fn main() {
         let p = sn5.pop();
         print!("  {i}: [");
         for (j, &v) in p.iter().enumerate() {
-            if j > 0 { print!(", "); }
+            if j > 0 {
+                print!(", ");
+            }
             print!("{v:.16}");
         }
         println!("]");

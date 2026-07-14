@@ -1,10 +1,12 @@
-use std::time::Instant;
 use lds_gen::sphere_n::{Sphere3, SphereGen, SphereN};
+use std::time::Instant;
 
 macro_rules! bench {
     ($name:expr, $count:expr, $body:expr) => {{
         let start = Instant::now();
-        for _ in 0..$count { $body; }
+        for _ in 0..$count {
+            $body;
+        }
         let ns = start.elapsed().as_nanos() as f64 / $count as f64;
         println!("  {:<30} {:>8.1} ns/op  ({} iters)", $name, ns, $count);
     }};
