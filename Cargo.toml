@@ -2,6 +2,7 @@
 name = "lds-gen"
 version = "0.1.9"
 edition = "2024"
+rust-version = "1.85"
 description = "Low-Discrepancy Sequence (LDS) Generator in Rust"
 authors = ["Wai-Shing Luk <luk036@gmail.com>"]
 license = "MIT"
