@@ -11,8 +11,8 @@
 use std::mem::size_of;
 
 use dhat::{HeapStats, Profiler};
-use lds_gen::sphere_n::{Sphere3, SphereGen, SphereN};
-use lds_gen::{Circle, Disk, Halton, HaltonN, Sphere, Sphere3Hopf, VdCorput};
+use lds_rs::sphere_n::{Sphere3, SphereGen, SphereN};
+use lds_rs::{Circle, Disk, Halton, HaltonN, Sphere, Sphere3Hopf, VdCorput};
 
 #[global_allocator]
 static ALLOC: dhat::Alloc = dhat::Alloc;

@@ -1,7 +1,7 @@
 // This example demonstrates env_logger integration
 // Run with: cargo run --example env_logger_example --features env_logger
 
-use lds_gen::VdCorput;
+use lds_rs::VdCorput;
 use log::info;
 
 fn main() {

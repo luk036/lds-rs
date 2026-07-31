@@ -99,7 +99,7 @@ pub const MAX_DIGITS: usize = 64;
 /// # Examples
 ///
 /// ```
-/// use lds_gen::vdc;
+/// use lds_rs::vdc;
 /// assert_eq!(vdc(11, 2), 0.8125);
 /// ```
 pub fn vdc(count: u64, base: u64) -> f64 {
@@ -129,7 +129,7 @@ pub fn vdc(count: u64, base: u64) -> f64 {
 /// # Examples
 ///
 /// ```
-/// use lds_gen::VdCorput;
+/// use lds_rs::VdCorput;
 /// let mut vgen = VdCorput::new(2);
 /// vgen.reseed(0);
 /// assert_eq!(vgen.pop(), 0.5);
@@ -293,7 +293,7 @@ impl Clone for VdCorput {
 /// # Examples
 ///
 /// ```
-/// use lds_gen::Halton;
+/// use lds_rs::Halton;
 /// let mut hgen = Halton::new([2, 3]);
 /// hgen.reseed(0);
 /// let res = hgen.pop();
@@ -399,7 +399,7 @@ impl Clone for Halton {
 /// # Examples
 ///
 /// ```
-/// use lds_gen::Circle;
+/// use lds_rs::Circle;
 /// let mut cgen = Circle::new(2);
 /// cgen.reseed(0);
 /// let res = cgen.pop();
@@ -512,7 +512,7 @@ impl Clone for Circle {
 /// # Examples
 ///
 /// ```
-/// use lds_gen::Disk;
+/// use lds_rs::Disk;
 /// let mut dgen = Disk::new([2, 3]);
 /// dgen.reseed(0);
 /// let res = dgen.pop();
@@ -634,7 +634,7 @@ impl Clone for Disk {
 /// # Examples
 ///
 /// ```
-/// use lds_gen::Sphere;
+/// use lds_rs::Sphere;
 /// let mut sgen = Sphere::new([2, 3]);
 /// sgen.reseed(0);
 /// let res = sgen.pop();
@@ -763,7 +763,7 @@ impl Clone for Sphere {
 /// # Examples
 ///
 /// ```
-/// use lds_gen::Sphere3Hopf;
+/// use lds_rs::Sphere3Hopf;
 /// let mut sp3hgen = Sphere3Hopf::new([2, 3, 5]);
 /// sp3hgen.reseed(0);
 /// let res = sp3hgen.pop();
@@ -911,7 +911,7 @@ impl Clone for Sphere3Hopf {
 /// # Examples
 ///
 /// ```
-/// use lds_gen::HaltonN;
+/// use lds_rs::HaltonN;
 /// let mut hgen = HaltonN::new(&[2, 3, 5]);
 /// hgen.reseed(0);
 /// let res = hgen.pop();

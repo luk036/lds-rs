@@ -1,4 +1,4 @@
-use lds_gen::sphere_n::{Sphere3, SphereGen, SphereN};
+use lds_rs::sphere_n::{Sphere3, SphereGen, SphereN};
 use std::time::Instant;
 
 macro_rules! bench {

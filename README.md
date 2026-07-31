@@ -34,7 +34,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-lds-gen = "0.1.0"
+lds-rs = "0.1.0"
 ```
 
 ## Usage
@@ -42,7 +42,7 @@ lds-gen = "0.1.0"
 ### Basic van der Corput Sequence
 
 ```rust
-use lds_gen::VdCorput;
+use lds_rs::VdCorput;
 
 let mut vgen = VdCorput::new(2);
 vgen.reseed(0);
@@ -53,7 +53,7 @@ println!("Second value: {}", vgen.pop()); // 0.25
 ### 2D Halton Sequence
 
 ```rust
-use lds_gen::Halton;
+use lds_rs::Halton;
 
 let mut hgen = Halton::new([2, 3]);
 hgen.reseed(0);
@@ -64,7 +64,7 @@ println!("Point: {:?}", point); // [0.5, 0.3333333333333333]
 ### Points on a Sphere
 
 ```rust
-use lds_gen::Sphere;
+use lds_rs::Sphere;
 
 let mut sgen = Sphere::new([2, 3]);
 sgen.reseed(0);
@@ -75,7 +75,7 @@ println!("Sphere point: {:?}", point); // Point on unit sphere
 ### N-Dimensional Spheres
 
 ```rust
-use lds_gen::sphere_n::{Sphere3, SphereN, SphereGen};
+use lds_rs::sphere_n::{Sphere3, SphereN, SphereGen};
 
 // 3-sphere (4D)
 let mut sgen3 = Sphere3::new(&[2, 3, 5]);
@@ -95,7 +95,7 @@ The sphere generators use thread-safe lazy initialization and caching for optima
 ### Integer Sequences
 
 ```rust
-use lds_gen::ilds::{VdCorput, Halton};
+use lds_rs::ilds::{VdCorput, Halton};
 
 // Integer van der Corput
 let mut ivdc = VdCorput::new(2, 10);
@@ -116,7 +116,7 @@ All sequence generators are thread-safe and can be safely shared across threads:
 ```rust
 use std::sync::Arc;
 use std::thread;
-use lds_gen::Halton;
+use lds_rs::Halton;
 
 let halton = Arc::new(Halton::new([2, 3]));
 halton.reseed(0);

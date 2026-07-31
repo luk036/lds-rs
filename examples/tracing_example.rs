@@ -1,6 +1,6 @@
 // This example demonstrates tracing integration
 // Run with: cargo run --example tracing_example --features tracing
-use lds_gen::VdCorput;
+use lds_rs::VdCorput;
 use tracing::{Level, span};
 
 fn main() {

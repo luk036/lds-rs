@@ -206,7 +206,7 @@ impl SphereGen for Sphere {
 /// # Examples
 ///
 /// ```
-/// use lds_gen::sphere_n::{Sphere3, SphereGen};
+/// use lds_rs::sphere_n::{Sphere3, SphereGen};
 /// let mut sgen = Sphere3::new(&[2, 3, 5]);
 /// sgen.reseed(0);
 /// let point = sgen.pop();
@@ -281,7 +281,7 @@ impl SphereGen for Sphere3 {
 /// # Examples
 ///
 /// ```
-/// use lds_gen::sphere_n::{SphereN, SphereGen};
+/// use lds_rs::sphere_n::{SphereN, SphereGen};
 /// let mut sgen = SphereN::new(&[2, 3, 5, 7]);
 /// sgen.reseed(0);
 /// let point = sgen.pop();

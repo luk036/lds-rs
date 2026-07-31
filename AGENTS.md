@@ -109,7 +109,7 @@ All sequence generators follow this consistent API:
 /// # Examples
 ///
 /// ```
-/// use lds_gen::TypeName;
+/// use lds_rs::TypeName;
 /// let mut gen = TypeName::new(params);
 /// gen.reseed(0);
 /// let result = gen.pop();

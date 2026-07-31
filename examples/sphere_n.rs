@@ -1,6 +1,6 @@
 //! Examples of n-dimensional sphere sequence generation
 
-use lds_gen::sphere_n::{Sphere3, SphereGen, SphereN};
+use lds_rs::sphere_n::{Sphere3, SphereGen, SphereN};
 
 fn main() {
     println!("=== N-Dimensional Sphere Sequence Examples ===\n");
@@ -35,7 +35,7 @@ fn main() {
     println!("3. Higher dimensional spheres:");
     let dimensions = [3, 4, 5, 6];
     for &dim in &dimensions {
-        let bases: Vec<u64> = (0..dim).map(|i| lds_gen::PRIME_TABLE[i]).collect();
+        let bases: Vec<u64> = (0..dim).map(|i| lds_rs::PRIME_TABLE[i]).collect();
         let mut sgen = SphereN::new(&bases);
         sgen.reseed(0);
         let point = sgen.pop();

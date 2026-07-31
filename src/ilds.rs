@@ -20,7 +20,7 @@ const MAX_DIGITS: usize = 64;
 /// # Examples
 ///
 /// ```
-/// use lds_gen::ilds::VdCorput;
+/// use lds_rs::ilds::VdCorput;
 /// let mut vdc = VdCorput::new(2, 10);
 /// vdc.reseed(0);
 /// assert_eq!(vdc.pop(), 512); // 0.5 * 2^10 = 512
@@ -145,7 +145,7 @@ impl Iterator for VdCorput {
 /// # Examples
 ///
 /// ```
-/// use lds_gen::ilds::Halton;
+/// use lds_rs::ilds::Halton;
 /// let mut hgen = Halton::new([2, 3], [11, 7]);
 /// hgen.reseed(0);
 /// let res = hgen.pop();

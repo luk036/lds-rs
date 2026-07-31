@@ -1,6 +1,6 @@
 //! Examples of integer low-discrepancy sequences
 
-use lds_gen::ilds::{Halton, VdCorput};
+use lds_rs::ilds::{Halton, VdCorput};
 
 fn main() {
     println!("=== Integer Low-Discrepancy Sequence Examples ===\n");

@@ -1,5 +1,5 @@
-use lds_gen::sphere_n::{Sphere3, SphereGen, SphereN};
-use lds_gen::{Circle, Disk, Halton, Sphere, Sphere3Hopf, VdCorput};
+use lds_rs::sphere_n::{Sphere3, SphereGen, SphereN};
+use lds_rs::{Circle, Disk, Halton, Sphere, Sphere3Hopf, VdCorput};
 use std::time::Instant;
 
 macro_rules! bench {
