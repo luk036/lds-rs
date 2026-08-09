@@ -148,7 +148,7 @@ fn compute_tp_arc(n: usize) -> Arc<[f64]> {
     let neg_cosine = &SPHERE_TABLES.neg_cosine;
     let sine = &SPHERE_TABLES.sine;
 
-    let even = n.is_multiple_of(2);
+    let even = n % 2 == 0;
     let mut prev: Vec<f64> = if even {
         x.to_vec()
     } else {

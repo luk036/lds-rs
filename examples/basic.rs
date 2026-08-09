@@ -1,4 +1,4 @@
-//! Basic examples of using the lds-gen library
+//! Basic examples of using the lds-rs library
 
 use lds_rs::{Circle, Disk, Halton, HaltonN, PRIME_TABLE, Sphere, VdCorput};
 

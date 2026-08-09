@@ -111,23 +111,20 @@ println!("Integer point: {:?}", int_point); // [1024, 729]
 
 ### Thread-safe Usage
 
-All sequence generators are thread-safe and can be safely shared across threads:
+Generators are `Send + Sync`, so they can be moved into threads:
 
 ```rust
-use std::sync::Arc;
 use std::thread;
 use lds_rs::Halton;
-
-let halton = Arc::new(Halton::new([2, 3]));
-halton.reseed(0);
 
 let mut handles = vec![];
 
 for _ in 0..4 {
-    let halton_clone = Arc::clone(&halton);
     let handle = thread::spawn(move || {
-        // Each thread safely generates points
-        let point = halton_clone.pop();
+        // Each thread has its own generator
+        let mut halton = Halton::new([2, 3]);
+        halton.reseed(0);
+        let point = halton.pop();
         println!("Thread point: {:?}", point);
     });
     handles.push(handle);
@@ -178,29 +175,10 @@ Run the tests with:
 cargo test
 ```
 
-## 🛠️ Installation
-
-### 📦 Cargo
-
-- Install the rust toolchain in order to have cargo installed by following
-  [this](https://www.rust-lang.org/tools/install) guide.
-- run `cargo install lds-rs`
-
 ## 📜 License
 
-Licensed under either of
-
-- Apache License, Version 2.0
-  ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-- MIT license
-  ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
-
-at your option.
+Licensed under the [MIT license](LICENSE-MIT) (see http://opensource.org/licenses/MIT).
 
 ## 🤝 Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally submitted
-for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
-dual licensed as above, without any additional terms or conditions.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).

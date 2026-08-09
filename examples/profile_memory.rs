@@ -1,4 +1,4 @@
-//! Memory usage profiling for lds-gen generators.
+//! Memory usage profiling for lds-rs generators.
 //!
 //! Prints stack sizes (via size_of) and heap usage (via dhat).
 //!
