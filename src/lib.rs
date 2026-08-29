@@ -75,6 +75,7 @@
 )]
 
 use std::f64::consts::PI;
+use std::ops::{Add, Mul};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Constant for 2π
@@ -115,6 +116,181 @@ pub fn vdc(count: u64, base: u64) -> f64 {
         reslt += remainder / denom;
     }
     reslt
+}
+
+/// Numeric conversion helper for the digit-weight core.
+///
+/// `From<u64>` is not implemented for `f64` (lossy), so the core uses this
+/// explicit lossy cast instead.
+trait DigitValue: Copy + PartialEq {
+    fn from_u64(value: u64) -> Self;
+}
+
+impl DigitValue for f64 {
+    #[inline]
+    fn from_u64(value: u64) -> Self {
+        value as f64
+    }
+}
+
+impl DigitValue for u64 {
+    #[inline]
+    fn from_u64(value: u64) -> Self {
+        value
+    }
+}
+
+/// Core base-b digit/weight summation shared by all van der Corput generators.
+///
+/// Extracts the base-b digits of `n` (least significant first) and accumulates each
+/// digit times its precomputed weight:
+///
+/// $$ \sum_k a_k(n) \cdot \mathrm{weights}[k], \qquad n = \sum_k a_k(n) b^k $$
+///
+/// The `weights` table determines the value type and scaling of the result:
+/// reverse powers $$ b^{-k-1} $$ for the floating-point generators, ascending
+/// integer powers for the integer generators.
+fn vdc_digit_sum<T>(mut n: u64, base: u64, weights: &[T]) -> T
+where
+    T: DigitValue + Add<Output = T> + Mul<Output = T>,
+{
+    let mut res = T::from_u64(0);
+    let zero = T::from_u64(0);
+    let mut i = 0;
+    while n != 0 {
+        let remainder = T::from_u64(n % base);
+        n /= base;
+        if remainder != zero {
+            res = res + remainder * weights[i];
+        }
+        i += 1;
+    }
+    res
+}
+
+/// Sequence generator protocol
+///
+/// The uniform strategy interface shared by every generator: pop/peek/advance/
+/// get_index/reseed. The trait implements the protocol skeleton (Template Method
+/// pattern) in terms of two hooks supplied by each concrete generator: a pure
+/// index-to-value computation [`Generator::value_at`] and the atomic sequence
+/// counter [`Generator::counter`].
+///
+/// Every generator keeps the same methods as *inherent* methods (so no trait
+/// import is required to call `pop()` etc.), and additionally implements this
+/// trait so generic code can be written against the protocol.
+pub trait Generator {
+    /// The value type produced by `pop()`/`peek()`.
+    type Value;
+
+    /// Access the atomic sequence counter (single source of state).
+    fn counter(&self) -> &AtomicU64;
+
+    /// Evaluate the sequence value at a given index (pure, no state change).
+    fn value_at(&self, n: u64) -> Self::Value;
+
+    /// Generates the next value in the sequence (advances state).
+    ///
+    /// Atomically claims the next index and evaluates the pure `value_at` computation.
+    fn pop(&mut self) -> Self::Value {
+        let n = self.counter().fetch_add(1, Ordering::Relaxed) + 1; // ignore 0
+        self.value_at(n)
+    }
+
+    /// Returns the next value without advancing the state (peek).
+    #[inline]
+    fn peek(&self) -> Self::Value {
+        self.value_at(self.counter().load(Ordering::Relaxed) + 1)
+    }
+
+    /// Advances the sequence by `n` values without computing them.
+    ///
+    /// # Arguments
+    ///
+    /// * `n` - The number of values to advance
+    #[inline]
+    fn advance(&self, n: u64) {
+        self.counter().fetch_add(n, Ordering::Relaxed);
+    }
+
+    /// Returns the current index (number of values generated so far).
+    #[inline]
+    fn get_index(&self) -> u64 {
+        self.counter().load(Ordering::Relaxed)
+    }
+
+    /// Resets the state of the sequence generator to a specific seed value.
+    ///
+    /// # Arguments
+    ///
+    /// * `seed` - The seed value that determines the starting point of the sequence generation
+    #[inline]
+    fn reseed(&mut self, seed: u64) {
+        self.counter().store(seed, Ordering::Relaxed);
+    }
+}
+
+/// Generates the inherent generator protocol methods and the `Iterator` impl.
+///
+/// Requires the struct to have a `count: AtomicU64` field and a pure
+/// `value_at(&self, n)` method, and to implement the [`Generator`] trait.
+#[doc(hidden)]
+#[macro_export]
+macro_rules! impl_generator_protocol {
+    ($name:ident, $value:ty) => {
+        impl $name {
+            /// Generates the next value in the sequence (advances state).
+            #[inline]
+            pub fn pop(&mut self) -> $value {
+                $crate::Generator::pop(self)
+            }
+
+            /// Returns the next value without advancing the state (peek).
+            #[inline]
+            pub fn peek(&self) -> $value {
+                $crate::Generator::peek(self)
+            }
+
+            /// Advances the sequence by `n` values without computing them.
+            ///
+            /// # Arguments
+            ///
+            /// * `n` - The number of values to advance
+            #[inline]
+            pub fn advance(&self, n: u64) {
+                $crate::Generator::advance(self, n);
+            }
+
+            /// Returns the current index (number of values generated so far).
+            #[inline]
+            pub fn get_index(&self) -> u64 {
+                $crate::Generator::get_index(self)
+            }
+
+            /// Resets the state of the sequence generator to a specific seed value.
+            ///
+            /// # Arguments
+            ///
+            /// * `seed` - The seed value that determines the starting point of the sequence generation
+            #[inline]
+            pub fn reseed(&mut self, seed: u64) {
+                $crate::Generator::reseed(self, seed);
+            }
+        }
+
+        impl Iterator for $name {
+            type Item = $value;
+
+            /// Returns the next value in the sequence.
+            ///
+            /// This allows the generator to be used with iterator methods like
+            /// `.take()`, `.collect()`, etc.
+            #[inline]
+            fn next(&mut self) -> Option<Self::Item> {
+                Some(self.pop())
+            }
+        }
+    };
 }
 
 /// van der Corput sequence generator
@@ -184,86 +360,35 @@ impl VdCorput {
         }
     }
 
-    /// Generates the next value in the sequence
+    /// Evaluate the sequence value at a given index (pure, no state change)
     ///
     /// $$ \phi_b(n) = \sum_{k=0}^{m} \frac{d_k}{b^{k+1}} $$
     ///
-    /// Increments the count and calculates the van der Corput sequence value
-    /// for that count and base.
-    pub fn pop(&mut self) -> f64 {
-        let count = self.count.fetch_add(1, Ordering::Relaxed) + 1; // ignore 0
-        let mut count = count;
-        let mut res = 0.0;
-        let mut i = 0;
-
-        while count != 0 {
-            let remainder = (count % self.base) as f64;
-            count /= self.base;
-            if remainder != 0.0 {
-                res += remainder * self.rev_lst[i];
-            }
-            i += 1;
-        }
-        res
-    }
-
-    /// Returns the next value without advancing the state (peek)
-    ///
-    /// $$ \phi_b(n) = \sum_{k=0}^{m} \frac{d_k}{b^{k+1}} $$
-    ///
-    /// Allows looking at the next value in the sequence without consuming it.
-    pub fn peek(&self) -> f64 {
-        let mut count = self.count.load(Ordering::Relaxed) + 1;
-        let mut res = 0.0;
-        let mut i = 0;
-
-        while count != 0 {
-            let remainder = (count % self.base) as f64;
-            count /= self.base;
-            if remainder != 0.0 {
-                res += remainder * self.rev_lst[i];
-            }
-            i += 1;
-        }
-        res
-    }
-
-    /// Advances the sequence by `n` values without computing them
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - The number of values to advance
-    pub fn advance(&self, n: u64) {
-        self.count.fetch_add(n, Ordering::Relaxed);
-    }
-
-    /// Returns the current index (number of values generated so far)
-    pub fn get_index(&self) -> u64 {
-        self.count.load(Ordering::Relaxed)
-    }
-
-    /// Resets the state of the sequence generator to a specific seed value
-    ///
-    /// # Arguments
-    ///
-    /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u64) {
-        self.count.store(seed, Ordering::Relaxed);
+    /// The sequence counter stays untouched; `pop()` and `peek()` build on this.
+    #[inline]
+    pub fn value_at(&self, n: u64) -> f64 {
+        vdc_digit_sum(n, self.base, &self.rev_lst)
     }
 }
 
-impl Iterator for VdCorput {
-    type Item = f64;
+impl Generator for VdCorput {
+    type Value = f64;
 
-    /// Returns the next value in the sequence
-    ///
-    /// This allows VdCorput to be used with iterator methods like `.take()`, `.collect()`, etc.
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(self.pop())
+    #[inline]
+    fn counter(&self) -> &AtomicU64 {
+        &self.count
+    }
+
+    fn value_at(&self, n: u64) -> f64 {
+        // Inherent `VdCorput::value_at` wins this resolution — delegates, no recursion.
+        VdCorput::value_at(self, n)
     }
 }
+
+impl_generator_protocol!(VdCorput, f64);
 
 impl Default for VdCorput {
+    #[inline]
     fn default() -> Self {
         Self::new(2)
     }
@@ -311,6 +436,7 @@ impl Clone for VdCorput {
 /// ```
 ))]
 pub struct Halton {
+    count: AtomicU64,
     vdc0: VdCorput,
     vdc1: VdCorput,
 }
@@ -323,59 +449,38 @@ impl Halton {
     /// * `base` - An array of two integers used as bases for generating the Halton sequence
     pub fn new(base: [u64; 2]) -> Self {
         Self {
+            count: AtomicU64::new(0),
             vdc0: VdCorput::new(base[0]),
             vdc1: VdCorput::new(base[1]),
         }
     }
 
-    /// Generates the next point in the Halton sequence
+    /// Evaluate the 2D Halton point at a given index (pure, no state change)
     ///
-    /// Returns the next point in the Halton sequence as a `[f64; 2]`.
-    pub fn pop(&mut self) -> [f64; 2] {
-        [self.vdc0.pop(), self.vdc1.pop()]
-    }
-
-    /// Returns the next point without advancing the state (peek)
-    pub fn peek(&self) -> [f64; 2] {
-        [self.vdc0.peek(), self.vdc1.peek()]
-    }
-
-    /// Skips `n` points in the sequence without computing them
+    /// $$ H(n) = \bigl(\phi_{b_0}(n),\; \phi_{b_1}(n)\bigr) $$
     ///
-    /// # Arguments
-    ///
-    /// * `n` - The number of points to skip
-    pub fn advance(&self, n: u64) {
-        self.vdc0.advance(n);
-        self.vdc1.advance(n);
-    }
-
-    /// Returns the current index (number of points generated so far)
-    pub fn get_index(&self) -> u64 {
-        self.vdc0.get_index()
-    }
-
-    /// Resets the state of the sequence generator to a specific seed value
-    ///
-    /// # Arguments
-    ///
-    /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u64) {
-        self.vdc0.reseed(seed);
-        self.vdc1.reseed(seed);
+    /// The sequence counter stays untouched; `pop()` and `peek()` build on this.
+    #[inline]
+    pub fn value_at(&self, n: u64) -> [f64; 2] {
+        [self.vdc0.value_at(n), self.vdc1.value_at(n)]
     }
 }
 
-impl Iterator for Halton {
-    type Item = [f64; 2];
+impl Generator for Halton {
+    type Value = [f64; 2];
 
-    /// Returns the next point in the Halton sequence
-    ///
-    /// This allows Halton to be used with iterator methods like `.take()`, `.collect()`, etc.
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(self.pop())
+    #[inline]
+    fn counter(&self) -> &AtomicU64 {
+        &self.count
+    }
+
+    fn value_at(&self, n: u64) -> [f64; 2] {
+        // Inherent `Halton::value_at` wins this resolution — delegates, no recursion.
+        Halton::value_at(self, n)
     }
 }
+
+impl_generator_protocol!(Halton, [f64; 2]);
 
 impl Clone for Halton {
     /// Creates a deep copy of the Halton generator
@@ -384,6 +489,7 @@ impl Clone for Halton {
     /// preserving the same internal state.
     fn clone(&self) -> Self {
         Self {
+            count: AtomicU64::new(self.count.load(Ordering::Relaxed)),
             vdc0: self.vdc0.clone(),
             vdc1: self.vdc1.clone(),
         }
@@ -422,6 +528,7 @@ impl Clone for Halton {
 /// ```
 ))]
 pub struct Circle {
+    count: AtomicU64,
     vdc: VdCorput,
 }
 
@@ -434,68 +541,44 @@ impl Circle {
     pub fn new(base: u64) -> Self {
         assert!(base >= 2, "base must be >= 2, got {}", base);
         Self {
+            count: AtomicU64::new(0),
             vdc: VdCorput::new(base),
         }
     }
 
-    /// Generates the next point on the unit circle
+    /// Evaluate the point on the unit circle at a given index (pure, no state change)
     ///
     /// $$ \theta = 2\pi v, \qquad (\cos\theta,\; \sin\theta) $$
     ///
     /// Maps the van der Corput value $$ v \in \[0,1\] $$ to $$ \[0, 2\pi\] $$.
     ///
-    /// Returns the next point on the unit circle as a `[f64; 2]`.
-    pub fn pop(&mut self) -> [f64; 2] {
-        let theta = self.vdc.pop() * TWO_PI; // map to [0, 2π]
+    /// The sequence counter stays untouched; `pop()` and `peek()` build on this.
+    pub fn value_at(&self, n: u64) -> [f64; 2] {
+        let theta = self.vdc.value_at(n) * TWO_PI; // map to [0, 2π]
         [theta.cos(), theta.sin()]
-    }
-
-    /// Returns the next point without advancing the state (peek)
-    ///
-    /// $$ \theta = 2\pi v, \qquad (\cos\theta,\; \sin\theta) $$
-    pub fn peek(&self) -> [f64; 2] {
-        let theta = self.vdc.peek() * TWO_PI;
-        [theta.cos(), theta.sin()]
-    }
-
-    /// Skips `n` points in the sequence without computing them
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - The number of points to skip
-    pub fn advance(&self, n: u64) {
-        self.vdc.advance(n);
-    }
-
-    /// Returns the current index (number of points generated so far)
-    pub fn get_index(&self) -> u64 {
-        self.vdc.get_index()
-    }
-
-    /// Resets the state of the sequence generator to a specific seed value
-    ///
-    /// # Arguments
-    ///
-    /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u64) {
-        self.vdc.reseed(seed);
     }
 }
 
-impl Iterator for Circle {
-    type Item = [f64; 2];
+impl Generator for Circle {
+    type Value = [f64; 2];
 
-    /// Returns the next point on the unit circle
-    ///
-    /// This allows Circle to be used with iterator methods like `.take()`, `.collect()`, etc.
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(self.pop())
+    #[inline]
+    fn counter(&self) -> &AtomicU64 {
+        &self.count
+    }
+
+    fn value_at(&self, n: u64) -> [f64; 2] {
+        // Inherent `Circle::value_at` wins this resolution — delegates, no recursion.
+        Circle::value_at(self, n)
     }
 }
+
+impl_generator_protocol!(Circle, [f64; 2]);
 
 impl Clone for Circle {
     fn clone(&self) -> Self {
         Self {
+            count: AtomicU64::new(self.count.load(Ordering::Relaxed)),
             vdc: self.vdc.clone(),
         }
     }
@@ -540,6 +623,7 @@ impl Clone for Circle {
 /// ```
 ))]
 pub struct Disk {
+    count: AtomicU64,
     vdc0: VdCorput,
     vdc1: VdCorput,
 }
@@ -552,71 +636,44 @@ impl Disk {
     /// * `base` - An array of two integers used as bases for generating the sequence
     pub fn new(base: [u64; 2]) -> Self {
         Self {
+            count: AtomicU64::new(0),
             vdc0: VdCorput::new(base[0]),
             vdc1: VdCorput::new(base[1]),
         }
     }
 
-    /// Generates the next point in the unit disk
+    /// Evaluate the point in the unit disk at a given index (pure, no state change)
     ///
     /// $$ \theta = 2\pi v_\theta, \qquad r = \sqrt{v_r}, \qquad (r\cos\theta,\; r\sin\theta) $$
     ///
-    /// Returns the next point in the unit disk as a `[f64; 2]`.
-    pub fn pop(&mut self) -> [f64; 2] {
-        let theta = self.vdc0.pop() * TWO_PI; // map to [0, 2π]
-        let radius = self.vdc1.pop().sqrt(); // map to [0, 1]
+    /// The sequence counter stays untouched; `pop()` and `peek()` build on this.
+    pub fn value_at(&self, n: u64) -> [f64; 2] {
+        let theta = self.vdc0.value_at(n) * TWO_PI; // map to [0, 2π]
+        let radius = self.vdc1.value_at(n).sqrt(); // map to [0, 1]
         [radius * theta.cos(), radius * theta.sin()]
-    }
-
-    /// Returns the next point without advancing the state (peek)
-    ///
-    /// $$ \theta = 2\pi v_\theta, \qquad r = \sqrt{v_r}, \qquad (r\cos\theta,\; r\sin\theta) $$
-    pub fn peek(&self) -> [f64; 2] {
-        let theta = self.vdc0.peek() * TWO_PI;
-        let radius = self.vdc1.peek().sqrt();
-        [radius * theta.cos(), radius * theta.sin()]
-    }
-
-    /// Skips `n` points in the sequence without computing them
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - The number of points to skip
-    pub fn advance(&self, n: u64) {
-        self.vdc0.advance(n);
-        self.vdc1.advance(n);
-    }
-
-    /// Returns the current index (number of points generated so far)
-    pub fn get_index(&self) -> u64 {
-        self.vdc0.get_index()
-    }
-
-    /// Resets the state of the sequence generator to a specific seed value
-    ///
-    /// # Arguments
-    ///
-    /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u64) {
-        self.vdc0.reseed(seed);
-        self.vdc1.reseed(seed);
     }
 }
 
-impl Iterator for Disk {
-    type Item = [f64; 2];
+impl Generator for Disk {
+    type Value = [f64; 2];
 
-    /// Returns the next point in the unit disk
-    ///
-    /// This allows Disk to be used with iterator methods like `.take()`, `.collect()`, etc.
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(self.pop())
+    #[inline]
+    fn counter(&self) -> &AtomicU64 {
+        &self.count
+    }
+
+    fn value_at(&self, n: u64) -> [f64; 2] {
+        // Inherent `Disk::value_at` wins this resolution — delegates, no recursion.
+        Disk::value_at(self, n)
     }
 }
+
+impl_generator_protocol!(Disk, [f64; 2]);
 
 impl Clone for Disk {
     fn clone(&self) -> Self {
         Self {
+            count: AtomicU64::new(self.count.load(Ordering::Relaxed)),
             vdc0: self.vdc0.clone(),
             vdc1: self.vdc1.clone(),
         }
@@ -662,6 +719,7 @@ impl Clone for Disk {
 /// ```
 ))]
 pub struct Sphere {
+    count: AtomicU64,
     vdcgen: VdCorput,
     cirgen: Circle,
 }
@@ -674,76 +732,48 @@ impl Sphere {
     /// * `base` - An array of two integers used as bases for generating the sequence
     pub fn new(base: [u64; 2]) -> Self {
         Self {
+            count: AtomicU64::new(0),
             vdcgen: VdCorput::new(base[0]),
             cirgen: Circle::new(base[1]),
         }
     }
 
-    /// Generates the next point on the unit sphere
+    /// Evaluate the point on the unit sphere at a given index (pure, no state change)
     ///
     /// $$ \phi = 2v - 1,\quad v \in \[0,1\], \qquad (\sqrt{1-\phi^2}\cos\theta,\; \sqrt{1-\phi^2}\sin\theta,\; \phi) $$
     ///
     /// where $$ \theta = 2\pi v_\theta $$ comes from the Circle generator.
     /// This is a cylindrical equal-area projection.
     ///
-    /// Returns the next point on the unit sphere as a `[f64; 3]`.
-    pub fn pop(&mut self) -> [f64; 3] {
-        let cosphi = 2.0 * self.vdcgen.pop() - 1.0; // map to [-1, 1]
+    /// The sequence counter stays untouched; `pop()` and `peek()` build on this.
+    pub fn value_at(&self, n: u64) -> [f64; 3] {
+        let cosphi = 2.0 * self.vdcgen.value_at(n) - 1.0; // map to [-1, 1]
         let sinphi = (1.0 - cosphi * cosphi).sqrt(); // cylindrical mapping
-        let [cos, sin] = self.cirgen.pop();
+        let [cos, sin] = self.cirgen.value_at(n);
         [sinphi * cos, sinphi * sin, cosphi]
-    }
-
-    /// Returns the next point without advancing the state (peek)
-    ///
-    /// $$ \phi = 2v - 1, \qquad (\sqrt{1-\phi^2}\cos\theta,\; \sqrt{1-\phi^2}\sin\theta,\; \phi) $$
-    pub fn peek(&self) -> [f64; 3] {
-        let cosphi = 2.0 * self.vdcgen.peek() - 1.0;
-        let sinphi = (1.0 - cosphi * cosphi).sqrt();
-        let [cos, sin] = self.cirgen.peek();
-        [sinphi * cos, sinphi * sin, cosphi]
-    }
-
-    /// Skips `n` points in the sequence without computing them
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - The number of points to skip
-    pub fn advance(&self, n: u64) {
-        self.cirgen.advance(n);
-        self.vdcgen.advance(n);
-    }
-
-    /// Returns the current index (number of points generated so far)
-    pub fn get_index(&self) -> u64 {
-        self.vdcgen.get_index()
-    }
-
-    /// Resets the state of the sequence generator to a specific seed value
-    ///
-    /// # Arguments
-    ///
-    /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u64) {
-        self.cirgen.reseed(seed);
-        self.vdcgen.reseed(seed);
     }
 }
 
-impl Iterator for Sphere {
-    type Item = [f64; 3];
+impl Generator for Sphere {
+    type Value = [f64; 3];
 
-    /// Returns the next point on the unit sphere
-    ///
-    /// This allows Sphere to be used with iterator methods like `.take()`, `.collect()`, etc.
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(self.pop())
+    #[inline]
+    fn counter(&self) -> &AtomicU64 {
+        &self.count
+    }
+
+    fn value_at(&self, n: u64) -> [f64; 3] {
+        // Inherent `Sphere::value_at` wins this resolution — delegates, no recursion.
+        Sphere::value_at(self, n)
     }
 }
+
+impl_generator_protocol!(Sphere, [f64; 3]);
 
 impl Clone for Sphere {
     fn clone(&self) -> Self {
         Self {
+            count: AtomicU64::new(self.count.load(Ordering::Relaxed)),
             vdcgen: self.vdcgen.clone(),
             cirgen: self.cirgen.clone(),
         }
@@ -795,6 +825,7 @@ impl Clone for Sphere {
 /// ```
 ))]
 pub struct Sphere3Hopf {
+    count: AtomicU64,
     vdc0: VdCorput,
     vdc1: VdCorput,
     vdc2: VdCorput,
@@ -808,13 +839,14 @@ impl Sphere3Hopf {
     /// * `base` - An array of three integers used as bases for generating the sequence
     pub fn new(base: [u64; 3]) -> Self {
         Self {
+            count: AtomicU64::new(0),
             vdc0: VdCorput::new(base[0]),
             vdc1: VdCorput::new(base[1]),
             vdc2: VdCorput::new(base[2]),
         }
     }
 
-    /// Generates the next point on the 3-sphere using Hopf fibration
+    /// Evaluate the point on the 3-sphere at a given index (pure, no state change)
     ///
     /// The 3-sphere $$ S^3 $$ is parameterised by the Hopf fibration:
     ///
@@ -823,11 +855,11 @@ impl Sphere3Hopf {
     /// where $$ \phi,\psi \in [0, 2\pi) $$ and $$ \eta = \sqrt{v} $$ with
     /// $$ v \in \[0,1\] $$ (stratified sampling for uniform measure on $$ S^3 $$).
     ///
-    /// Returns the next point on the 3-sphere as a `[f64; 4]`.
-    pub fn pop(&mut self) -> [f64; 4] {
-        let phi = self.vdc0.pop() * TWO_PI; // map to [0, 2π]
-        let psy = self.vdc1.pop() * TWO_PI; // map to [0, 2π]
-        let vdc = self.vdc2.pop();
+    /// The sequence counter stays untouched; `pop()` and `peek()` build on this.
+    pub fn value_at(&self, n: u64) -> [f64; 4] {
+        let phi = self.vdc0.value_at(n) * TWO_PI; // map to [0, 2π]
+        let psy = self.vdc1.value_at(n) * TWO_PI; // map to [0, 2π]
+        let vdc = self.vdc2.value_at(n);
         let cos_eta = vdc.sqrt();
         let sin_eta = (1.0 - vdc).sqrt();
         [
@@ -837,66 +869,28 @@ impl Sphere3Hopf {
             sin_eta * (phi + psy).sin(),
         ]
     }
+}
 
-    /// Returns the next point without advancing the state (peek)
-    ///
-    /// $$ (\cos\eta\cdot e^{i\psi},\; \sin\eta\cdot e^{i(\phi+\psi)}) $$
-    pub fn peek(&self) -> [f64; 4] {
-        let phi = self.vdc0.peek() * TWO_PI;
-        let psy = self.vdc1.peek() * TWO_PI;
-        let vdc = self.vdc2.peek();
-        let cos_eta = vdc.sqrt();
-        let sin_eta = (1.0 - vdc).sqrt();
-        [
-            cos_eta * psy.cos(),
-            cos_eta * psy.sin(),
-            sin_eta * (phi + psy).cos(),
-            sin_eta * (phi + psy).sin(),
-        ]
+impl Generator for Sphere3Hopf {
+    type Value = [f64; 4];
+
+    #[inline]
+    fn counter(&self) -> &AtomicU64 {
+        &self.count
     }
 
-    /// Skips `n` points in the sequence without computing them
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - The number of points to skip
-    pub fn advance(&self, n: u64) {
-        self.vdc0.advance(n);
-        self.vdc1.advance(n);
-        self.vdc2.advance(n);
-    }
-
-    /// Returns the current index (number of points generated so far)
-    pub fn get_index(&self) -> u64 {
-        self.vdc0.get_index()
-    }
-
-    /// Resets the state of the sequence generator to a specific seed value
-    ///
-    /// # Arguments
-    ///
-    /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u64) {
-        self.vdc0.reseed(seed);
-        self.vdc1.reseed(seed);
-        self.vdc2.reseed(seed);
+    fn value_at(&self, n: u64) -> [f64; 4] {
+        // Inherent `Sphere3Hopf::value_at` wins this resolution — delegates, no recursion.
+        Sphere3Hopf::value_at(self, n)
     }
 }
 
-impl Iterator for Sphere3Hopf {
-    type Item = [f64; 4];
-
-    /// Returns the next point on the 3-sphere
-    ///
-    /// This allows Sphere3Hopf to be used with iterator methods like `.take()`, `.collect()`, etc.
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(self.pop())
-    }
-}
+impl_generator_protocol!(Sphere3Hopf, [f64; 4]);
 
 impl Clone for Sphere3Hopf {
     fn clone(&self) -> Self {
         Self {
+            count: AtomicU64::new(self.count.load(Ordering::Relaxed)),
             vdc0: self.vdc0.clone(),
             vdc1: self.vdc1.clone(),
             vdc2: self.vdc2.clone(),
@@ -920,6 +914,7 @@ impl Clone for Sphere3Hopf {
 /// assert!((res[2] - 0.2).abs() < 1e-10);
 /// ```
 pub struct HaltonN {
+    count: AtomicU64,
     vdcs: Vec<VdCorput>,
 }
 
@@ -931,46 +926,43 @@ impl HaltonN {
     /// * `base` - A slice of integers used as bases for each dimension
     pub fn new(base: &[u64]) -> Self {
         let vdcs = base.iter().map(|&b| VdCorput::new(b)).collect();
-        Self { vdcs }
+        Self {
+            count: AtomicU64::new(0),
+            vdcs,
+        }
     }
 
-    /// Generates the next point in the N-dimensional Halton sequence
+    /// Evaluate the N-dimensional Halton point at a given index (pure, no state change)
     ///
-    /// Returns the next point as a `Vec<f64>`.
-    pub fn pop(&mut self) -> Vec<f64> {
-        let mut result = Vec::with_capacity(self.vdcs.len());
-        for vdc in &mut self.vdcs {
-            result.push(vdc.pop());
-        }
-        result
-    }
-
-    /// Resets the state of the sequence generator to a specific seed value
+    /// $$ H(n) = (\phi_{b_1}(n), \phi_{b_2}(n), \dots, \phi_{b_N}(n)) $$
     ///
-    /// # Arguments
-    ///
-    /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u64) {
-        for vdc in &mut self.vdcs {
-            vdc.reseed(seed);
-        }
+    /// The sequence counter stays untouched; `pop()` and `peek()` build on this.
+    #[inline]
+    pub fn value_at(&self, n: u64) -> Vec<f64> {
+        self.vdcs.iter().map(|vdc| vdc.value_at(n)).collect()
     }
 }
 
-impl Iterator for HaltonN {
-    type Item = Vec<f64>;
+impl Generator for HaltonN {
+    type Value = Vec<f64>;
 
-    /// Returns the next point in the N-dimensional Halton sequence
-    ///
-    /// This allows HaltonN to be used with iterator methods like `.take()`, `.collect()`, etc.
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(self.pop())
+    #[inline]
+    fn counter(&self) -> &AtomicU64 {
+        &self.count
+    }
+
+    fn value_at(&self, n: u64) -> Vec<f64> {
+        // Inherent `HaltonN::value_at` wins this resolution — delegates, no recursion.
+        HaltonN::value_at(self, n)
     }
 }
+
+impl_generator_protocol!(HaltonN, Vec<f64>);
 
 impl Clone for HaltonN {
     fn clone(&self) -> Self {
         Self {
+            count: AtomicU64::new(self.count.load(Ordering::Relaxed)),
             vdcs: self.vdcs.clone(),
         }
     }

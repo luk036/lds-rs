@@ -192,10 +192,12 @@ pub trait SphereGen: Send + Sync {
 }
 
 impl SphereGen for Sphere {
+    #[inline]
     fn pop(&mut self) -> Vec<f64> {
         Sphere::pop(self).to_vec()
     }
 
+    #[inline]
     fn reseed(&mut self, seed: u64) {
         Sphere::reseed(self, seed);
     }
@@ -232,6 +234,7 @@ impl Sphere3 {
     }
 
     /// Returns the current index (number of points generated so far)
+    #[inline]
     pub fn get_index(&self) -> u64 {
         self.vdc.get_index()
     }
@@ -375,6 +378,7 @@ impl SphereGen for SphereN {
 
 impl SphereN {
     /// Returns the current index (number of points generated so far)
+    #[inline]
     pub fn get_index(&self) -> u64 {
         self.vdc.get_index()
     }
@@ -384,6 +388,7 @@ impl SphereN {
     /// # Arguments
     ///
     /// * `n` - The number of points to advance
+    #[inline]
     pub fn advance(&self, n: u64) {
         self.vdc.advance(n);
     }
@@ -1160,7 +1165,10 @@ mod tests {
     #[test]
     fn test_struct_sizes() {
         use std::mem::size_of;
-        assert_eq!(size_of::<Sphere3>(), 120);
+        // Sphere3 embeds a Sphere, which gained an AtomicU64 sequence counter
+        // (+8) plus a Circle with its own counter (+8): 120 -> 136.
+        // SphereN does not embed a Sphere, so its size is unchanged.
+        assert_eq!(size_of::<Sphere3>(), 136);
         assert_eq!(size_of::<SphereN>(), 96);
     }
 

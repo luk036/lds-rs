@@ -6,7 +6,8 @@
 //! which can be useful for various applications like sampling, optimization,
 //! or numerical integration.
 
-use std::sync::atomic::{AtomicU64, Ordering};
+use crate::Generator;
+use std::sync::atomic::AtomicU64;
 
 /// Maximum number of digits for integer van der Corput sequence
 const MAX_DIGITS: usize = 64;
@@ -54,83 +55,40 @@ impl VdCorput {
         }
     }
 
-    /// Generates the next integer value in the sequence
+    /// Evaluate the integer sequence value at a given index (pure, no state change)
     ///
     /// $$ \phi_b(n) = \sum_{k=0}^{m} d_k \cdot \frac{b^{\text{scale}}}{b^{k+1}} $$
     ///
-    /// Increments the count and calculates the next integer value
-    /// in the van der Corput sequence.
-    pub fn pop(&mut self) -> u64 {
-        let count = self.count.fetch_add(1, Ordering::Relaxed) + 1;
-        let mut count = count;
-        let mut reslt = 0;
-        let mut idx = 0;
-
-        while count != 0 {
-            let remainder = count % self.base;
-            count /= self.base;
-            reslt += remainder * self.factor_lst[idx];
-            idx += 1;
-        }
-        reslt
-    }
-
-    /// Returns the next value without advancing the state (peek)
-    ///
-    /// $$ \phi_b(n) = \sum_{k=0}^{m} d_k \cdot \frac{b^{\text{scale}}}{b^{k+1}} $$
-    pub fn peek(&self) -> u64 {
-        let mut count = self.count.load(Ordering::Relaxed) + 1;
-        let mut reslt = 0;
-        let mut idx = 0;
-
-        while count != 0 {
-            let remainder = count % self.base;
-            count /= self.base;
-            reslt += remainder * self.factor_lst[idx];
-            idx += 1;
-        }
-        reslt
-    }
-
-    /// Advances the sequence by `n` values without computing them
-    ///
-    /// # Arguments
-    ///
-    /// * `n` - The number of values to advance
-    pub fn advance(&self, n: u64) {
-        self.count.fetch_add(n, Ordering::Relaxed);
-    }
-
-    /// Returns the current index (number of values generated so far)
-    pub fn get_index(&self) -> u64 {
-        self.count.load(Ordering::Relaxed)
-    }
-
-    /// Resets the state of the sequence generator to a specific seed value
-    ///
-    /// # Arguments
-    ///
-    /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u64) {
-        self.count.store(seed, Ordering::Relaxed);
+    /// The sequence counter stays untouched; `pop()` and `peek()` build on this.
+    #[inline]
+    pub fn value_at(&self, n: u64) -> u64 {
+        crate::vdc_digit_sum(n, self.base, &self.factor_lst)
     }
 }
+
+impl Generator for VdCorput {
+    type Value = u64;
+
+    #[inline]
+    fn counter(&self) -> &AtomicU64 {
+        &self.count
+    }
+
+    fn value_at(&self, n: u64) -> u64 {
+        // Inherent `VdCorput::value_at` wins this resolution — delegates, no recursion.
+        VdCorput::value_at(self, n)
+    }
+}
+
+crate::impl_generator_protocol!(VdCorput, u64);
 
 impl Default for VdCorput {
     /// Creates a default integer van der Corput generator
     ///
     /// Defaults to base 2 with scale 10 (produces values in range [0, 1024))
+    #[inline]
     fn default() -> Self {
         Self::new(2, 10)
-    }
-}
-
-impl Iterator for VdCorput {
-    type Item = u64;
-
-    /// Returns the next value in the sequence
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(self.pop())
     }
 }
 
@@ -153,6 +111,7 @@ impl Iterator for VdCorput {
 /// assert_eq!(res[1], 729);  // 1/3 * 3^7 = 729
 /// ```
 pub struct Halton {
+    count: AtomicU64,
     vdc0: VdCorput,
     vdc1: VdCorput,
 }
@@ -166,39 +125,38 @@ impl Halton {
     /// * `scale` - An array of two integers used as scales for each dimension
     pub fn new(base: [u64; 2], scale: [u32; 2]) -> Self {
         Self {
+            count: AtomicU64::new(0),
             vdc0: VdCorput::new(base[0], scale[0]),
             vdc1: VdCorput::new(base[1], scale[1]),
         }
     }
 
-    /// Generates the next point in the integer Halton sequence
+    /// Evaluate the integer 2D Halton point at a given index (pure, no state change)
     ///
-    /// Returns the next point as a `[u64; 2]`.
-    pub fn pop(&mut self) -> [u64; 2] {
-        [self.vdc0.pop(), self.vdc1.pop()]
-    }
-
-    /// Resets the state of the sequence generator to a specific seed value
+    /// $$ H(n) = \bigl(\phi_{b_0}(n),\; \phi_{b_1}(n)\bigr) $$
     ///
-    /// # Arguments
-    ///
-    /// * `seed` - The seed value that determines the starting point of the sequence generation
-    pub fn reseed(&mut self, seed: u64) {
-        self.vdc0.reseed(seed);
-        self.vdc1.reseed(seed);
+    /// The sequence counter stays untouched; `pop()` and `peek()` build on this.
+    #[inline]
+    pub fn value_at(&self, n: u64) -> [u64; 2] {
+        [self.vdc0.value_at(n), self.vdc1.value_at(n)]
     }
 }
 
-impl Iterator for Halton {
-    type Item = [u64; 2];
+impl Generator for Halton {
+    type Value = [u64; 2];
 
-    /// Returns the next point in the integer Halton sequence
-    ///
-    /// This allows Halton to be used with iterator methods like `.take()`, `.collect()`, etc.
-    fn next(&mut self) -> Option<Self::Item> {
-        Some(self.pop())
+    #[inline]
+    fn counter(&self) -> &AtomicU64 {
+        &self.count
+    }
+
+    fn value_at(&self, n: u64) -> [u64; 2] {
+        // Inherent `Halton::value_at` wins this resolution — delegates, no recursion.
+        Halton::value_at(self, n)
     }
 }
+
+crate::impl_generator_protocol!(Halton, [u64; 2]);
 
 #[cfg(test)]
 mod tests {
